@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#241608">
+<meta name="robots" content="noindex, nofollow">
+<title>VS Pet Shop — Admin Content Panel</title>
+
+<!-- Fonts (same as the live site, for a matching look) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&amp;family=Rubik:wght@500;600;700;800&amp;display=swap">
+
+<!-- Design tokens (CSS custom properties, fonts) from the live site -->
+<link rel="stylesheet" href="../assets/css/style.css?v=2">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body class="adm-body">
+
+<!-- Local icon sprite (kept separate from the live site's sprite; this is a
+     different document so id collisions are not a concern, but the symbol
+     set here is intentionally minimal — just what the admin UI needs). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-paw" viewBox="0 0 52 52" fill="currentColor" stroke="none"><ellipse cx="13" cy="19" rx="5" ry="6.4"/><ellipse cx="23" cy="13" rx="5.4" ry="6.9"/><ellipse cx="34" cy="15" rx="5.4" ry="6.9"/><ellipse cx="43" cy="23" rx="4.8" ry="5.9"/><path d="M26 25c7 0 13 5 13 11 0 5-3.8 8-8.6 8-2.2 0-3.2-.9-4.4-.9s-2.2.9-4.4.9c-4.8 0-8.6-3-8.6-8 0-6 6-11 13-11Z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 19h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></symbol>
+</svg>
+
+<!-- ══════════ PASSPHRASE GATE ══════════
+     Client-side only. See admin/assets/js/admin.js (top of file) for how
+     to change the passphrase — it is never stored in readable form here. -->
+<dialog class="adm-gate" id="admGate">
+  <div class="adm-gate__card">
+    <div class="adm-gate__paw"><svg class="ic" style="width:28px;height:28px"><use href="#i-paw"/></svg></div>
+    <h1 class="adm-h1">VS Pet Shop — Admin</h1>
+    <p>Enter the admin passphrase to continue. This only gates what you see on this
+      screen — it is <strong>not real security</strong>. See the warning banner
+      inside for details.</p>
+    <form id="admGateForm">
+      <input type="password" id="admGatePass" autocomplete="current-password" placeholder="Passphrase" required>
+      <p class="adm-gate__err" id="admGateErr" role="alert"></p>
+      <button type="submit" class="adm-btn adm-btn--primary adm-btn--block">Unlock</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- ══════════ MAIN SHELL (hidden until unlocked) ══════════ -->
+<div class="adm-shell" id="admShell">
+
+  <div class="adm-topbar">
+    <div class="adm-topbar__brand"><svg class="ic"><use href="#i-paw"/></svg> VS Pet Shop — Admin Content Panel</div>
+    <div class="adm-topbar__spacer"></div>
+    <span style="font-size:.8rem;opacity:.8">No backend. Nothing here is live until you re-upload the downloaded files.</span>
+  </div>
+
+  <div class="adm-warn adm-warn--danger" role="alert">
+    <svg class="ic"><use href="#i-warn"/></svg>
+    <div>
+      <b>This passphrase gate is NOT real security.</b>
+      Anyone with basic web knowledge can view-source this page and bypass it in seconds.
+      Never share the admin link publicly, and don't rely on it to hide anything sensitive.
+      This tool only edits a local copy of your site's files — it cannot publish anything
+      by itself.
+    </div>
+  </div>
+
+  <div class="adm-main">
+    <!-- ---------- LEFT: FORM PANEL ---------- -->
+    <div class="adm-panel adm-form-panel" id="admFormPanel">
+
+      <div class="adm-loader">
+        <label class="adm-file" for="admFileInput"><svg class="ic"><use href="#i-file"/></svg> <strong>Step 1 — Select your project files</strong></label><br>
+        <small class="adm-hint">Required: <code>index.html</code>. Optional (only needed if you want them updated too):
+          <code>assets/js/main.js</code>, <code>robots.txt</code>, <code>sitemap.xml</code>, <code>404.html</code>.
+          Hold Ctrl (Cmd on Mac) to select several files at once from your project folder.</small>
+        <input type="file" id="admFileInput" multiple accept=".html,.js,.txt,.xml">
+        <ul class="adm-loader__list" id="admFileList"></ul>
+      </div>
+
+      <div id="admEditorArea" hidden>
+        <p style="font-size:.85rem;color:var(--ink-soft)">
+          <strong>Step 2</strong> — edit the fields below. The preview on the right updates as you type.
+          Nothing is saved anywhere until you click <strong>Save &amp; Download</strong> at the bottom.
+        </p>
+        <div id="admSections"></div>
+      </div>
+    </div>
+
+    <!-- ---------- RIGHT: LIVE PREVIEW ---------- -->
+    <div class="adm-panel adm-preview-panel">
+      <div class="adm-preview-panel__head">
+        <strong class="adm-h4" style="font-size:.9rem">Live preview</strong>
+        <span style="font-size:.75rem;color:var(--ink-soft)">updates as you type</span>
+      </div>
+      <iframe id="admPreview" title="Live preview of edited index.html" srcdoc="<p style='font-family:sans-serif;padding:20px;color:#6B5340'>Load index.html on the left to see a preview here.</p>"></iframe>
+    </div>
+  </div>
+
+  <!-- ---------- ACTION BAR ---------- -->
+  <div class="adm-actionbar" id="admActionBar" hidden>
+    <button class="adm-btn adm-btn--primary" id="admSaveBtn"><svg class="ic"><use href="#i-download"/></svg> Save &amp; Download</button>
+    <span id="admSaveStatus" style="font-size:.85rem;color:var(--ink-soft)"></span>
+  </div>
+
+  <div class="adm-main" style="grid-template-columns:1fr;padding-top:0">
+    <div class="adm-downloads" id="admDownloads" hidden>
+      <strong>Files ready to download:</strong>
+      <ul id="admDownloadsList"></ul>
+    </div>
+
+    <div class="adm-publish" id="admPublish" hidden>
+      <strong>How to publish these changes (this tool does not deploy anything):</strong>
+      <ol>
+        <li>Open <strong>Hostinger → File Manager</strong> (or connect with an FTP client).</li>
+        <li>Go to your site's root folder (the one that already has <code>index.html</code> in it).</li>
+        <li>Upload each downloaded file, overwriting the existing one with the same name.</li>
+        <li>If you changed <code>assets/js/main.js</code>, also upload it into <code>assets/js/</code>.</li>
+        <li>Visit your live site in a private/incognito window to confirm the change went live.</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+
+<script src="assets/js/admin.js" defer></script>
+</body>
+</html>

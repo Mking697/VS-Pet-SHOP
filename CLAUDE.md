@@ -60,8 +60,18 @@ VS Pet Shop/
 ├── README.md           Owner-facing deploy + edit guide
 ├── favicon.svg         Paw mark
 ├── .htaccess           HTTPS force, gzip, cache headers, security headers, 404
-├── robots.txt
+├── robots.txt          Disallows /admin/ (see §9)
 ├── sitemap.xml
+├── admin/              Client-side "admin panel" for content editing — no
+│   │                   backend, edits a locally-selected copy of index.html
+│   │                   and hands back downloads to manually re-upload.
+│   │                   See §9 for why it works this way. noindex/nofollow.
+│   ├── index.html      Passphrase-gated form UI + live preview iframe
+│   └── assets/
+│       ├── css/admin.css  adm-prefixed styles, reuses the live site's
+│       │                  CSS tokens from assets/css/style.css
+│       └── js/admin.js    All admin logic. Passphrase hash + how to
+│                          change it documented at the top of the file.
 └── assets/
     ├── css/style.css   All styling. Design tokens in §1 at the top.
     ├── js/main.js      All behaviour. Config constants at the top (line ~11).
@@ -77,6 +87,20 @@ VS Pet Shop/
   Stroke icons inherit `.ic` styling; solid glyphs declare `fill`/`stroke` on the symbol.
 - **CSS section numbering** — the stylesheet is numbered §1–§23. Responsive rules are
   all in §22, ordered widest-first then narrowest. Keep new rules in their section.
+- **`data-field="..."` attributes in `index.html`** → purely additive markup (no visual
+  or behavioural effect — `main.js` never selects on them) that lets `admin/assets/js/admin.js`
+  find and update the right element without depending on line numbers or DOM order. See §9.
+  If you add new editable content to the page by hand, it will not show up in the admin
+  panel unless you also tag it with a `data-field` and add a matching field definition in
+  `admin/assets/js/admin.js` — that's expected, not a bug.
+- **Category catalog items** → each `<article class="cat cat--COLOR">` carries a
+  `<template class="cat__catalog" data-catalog-for="cat-N">` holding that category's
+  catalog items — real product cards (`.catmodal__item`, each with its own
+  `cat-N-catalog-M` / `-name` / `-desc` / `-img-src` / `-img-alt` / `-price` / `-avail`
+  `data-field`s — photo via the shared `.ph` frame, optional price, in-stock/unavailable
+  badge). The shared popup markup (`#catModal`) sits right after `#lightbox` near the
+  end of `<body>`; its CSS is the unnumbered "CATALOG MODAL" block right after §20
+  Lightbox in `style.css`. See main.js module 17 (§5 below) and §7 Done.
 
 ---
 
@@ -118,12 +142,27 @@ Birds, Pet Food, Grooming, Accessories) → tilted marquee ribbon → **6 servic
 **contact** (details + WhatsApp form + map) → CTA band → footer →
 floating WhatsApp FAB + back-to-top + mobile Call/WhatsApp/Directions bar.
 
-### JS modules in main.js (numbered 1–15)
+### JS modules in main.js (numbered 1–17)
 
 year · sticky header · nav drawer · scroll-spy active link · reveal+stagger observer ·
 counters · marquee init (clones the set, computes duration from width) · lightbox ·
 FAQ single-open · form→WhatsApp · back-to-top · one throttled scroll listener ·
-Escape closes overlays · broken-image fallback · marquee re-measure on resize.
+Escape closes overlays · broken-image fallback · marquee re-measure on resize ·
+**live pet photos** (§16 — every `.ph` photo frame tilts toward the cursor via
+`--tiltX/--tiltY/--tiltZ` custom properties set on `mousemove`, rAF-throttled, plus a
+paw-print (`.paw-trail`, reuses the `#i-paw` sprite symbol) trails the cursor while
+hovering one. Gated behind `matchMedia('(hover: hover) and (pointer: fine)')` so touch
+devices never trigger it, and behind `reduceMotion` so it never runs at all under
+`prefers-reduced-motion` — this was a 21st.dev-style "component" request; reimplemented
+in vanilla CSS/JS per the hard constraint in §1, no framework involved) ·
+**catalog modal** (§17 — each of the 6 category cards has a "View Catalog" button
+(`[data-catalog-trigger="cat-N"]`) that clones that category's
+`<template class="cat__catalog" data-catalog-for="cat-N">` into the shared `#catModal`
+popup. Title/lead are read live off that card's own `.cat__title` / `.cat__body p` so
+an admin-panel edit to either can't drift out of sync with the modal. Open/close
+mechanics are a direct copy of the §8 lightbox — `hidden` attribute + `.is-open` class,
+body scroll lock, focus moved to the close button on open and back to the trigger on
+close. Escape closes it via the existing §13 handler, extended rather than duplicated).
 
 ---
 
@@ -152,8 +191,9 @@ Escape closes overlays · broken-image fallback · marquee re-measure on resize.
 - [x] Claymorphism design system + tokens
 - [x] Motion: hero stagger, scroll reveal, counters, two marquees, hover states
 - [x] Accessibility: skip link, focus rings, ARIA labels, keyboard nav, reduced-motion
-- [x] SEO: local-intent title/description, LocalBusiness (PetStore) JSON-LD, OG tags,
-      sitemap, robots
+- [x] SEO: local-intent title/description, LocalBusiness (PetStore) JSON-LD, full OG +
+      Twitter Card tags (title/description/site_name/locale), explicit `robots` meta,
+      sitemap, robots.txt
 - [x] Real contact details, address, hours, social links wired in
 - [x] Real Google reviews replacing sample testimonials
 - [x] Birds + Grooming added as categories (confirmed from Instagram bio and reviews)
@@ -169,7 +209,115 @@ Escape closes overlays · broken-image fallback · marquee re-measure on resize.
       depends on this rule — do not remove it.**
 - [x] Asset URLs carry `?v=N`. `.htaccess` caches CSS/JS for a year, so **bump that
       number whenever style.css or main.js changes**, or returning visitors keep the
-      stale file. Currently `v=2` (index.html lines 30 and 728, 404.html line 12).
+      stale file. Currently: `main.js?v=5` (bumped from v=4 — module 14's broken-image
+      fallback was refactored into a reusable `bindBrokenImageFallback()` and re-run on
+      the catalog modal's cloned product photos, see §7 catalog-items-as-product-cards
+      entry), `style.css?v=6` (bumped from v=5 for the catalog item → product card
+      restyle — index.html and 404.html both reference the same style.css version).
+- [x] **`admin/` client-side content panel** — see §9. Tags almost every editable
+      string, image URL and link on the page with a `data-field` attribute, parses a
+      locally-selected copy of `index.html` (+ optionally `main.js`, `robots.txt`,
+      `sitemap.xml`, `404.html`) with `DOMParser`, offers a form UI with a live
+      preview, and downloads edited files for manual re-upload. Passphrase-gated
+      (not real security — see §9). `assets/css/style.css` and the shipped
+      `assets/js/main.js` were **not** modified by this work — no `?v=` bump needed.
+- [x] **SEO meta tags + admin SEO tab.** Added an explicit `robots` meta tag,
+      `og:site_name`, `og:locale`, and completed the Twitter Card set (`twitter:title`,
+      `twitter:description` — previously only `twitter:card` existed, so previews on
+      Twitter/X had no fallback of their own). `admin/` has a dedicated **SEO** section:
+      social-share title/description (drives `og:title`/`og:description` *and*
+      `twitter:title`/`twitter:description` together, one field each — they share a
+      `data-field` key so they can't drift out of sync), and an "Allow search engines to
+      index this site" checkbox that writes `noindex, nofollow` when off (useful while
+      the site is still using placeholder photos/domain). The JSON-LD block is now also
+      kept in sync automatically whenever Business Info changes: `telephone`, `email`,
+      `hasMap`, and `sameAs` (Instagram/Facebook/YouTube) are rewritten from the same
+      admin fields already used for the visible contact links — **except** the postal
+      `address` sub-fields, which are not auto-derived from the free-text "Full Address"
+      field (splitting that back into streetAddress/locality/region/postalCode reliably
+      isn't possible from plain text) — edit the JSON-LD block in `index.html` by hand
+      if the shop address ever changes.
+- [x] **Live pet photos on hover** — see JS module §16 above. The user asked to "use
+      the 21st.dev MCP server" for this; that MCP wasn't connected in this session, and
+      even if it were, its components are React-based and can't be dropped into a
+      no-framework static site (§1 hard constraint) — so the interaction pattern was
+      reimplemented from scratch in vanilla CSS custom properties + JS, same result,
+      zero framework weight.
+- [x] **Per-species hover motion** (CSS §9, `@keyframes trotDog / roamCat / flutterBird`)
+      — the user then asked for the dog to run/wag its tail, the cat to roam, the
+      parrot to flap its wings on hover. These are flat photographs (currently Unsplash
+      placeholders, pending the real shop photos above) — there is no rig, no separate
+      limb/wing layer, so nothing can literally run or flap frame-by-frame without real
+      video/frame source assets, which don't exist for this shop. What's built instead:
+      each `.cat--amber` (Dogs) / `.cat--violet` (Cats) / `.cat--sky` (Birds) card's
+      photo gets a distinct whole-image motion signature on hover — a bouncy trot, a
+      slow prowling drift, a fast wing-flutter shake respectively — that reads as that
+      behaviour. The hero photo (also a dog) reuses `trotDog`. Every keyframe re-states
+      `perspective()/rotateX()/rotateY()/scale()` from the §16 tilt custom properties
+      so the cursor-tilt and the species motion compose instead of one overwriting the
+      other. Neutralised by the existing global `prefers-reduced-motion` rule in §23
+      (no separate override needed — animation-duration already collapses to `.01ms`
+      there). Pure CSS, no new JS, no new assets.
+- [x] **Category catalogs + "View Catalog" popup.** The owner wanted each of the 6
+      category cards to open a browsable catalog. New markup: a `<template
+      class="cat__catalog" data-catalog-for="cat-N">` inside each `.cat` article holding
+      its `.catmodal__item`s, a "View Catalog" button in each card's `.cat__body`
+      (`[data-catalog-trigger="cat-N"]`, alongside the existing Enquire/Book-a-Slot
+      button, not replacing it), and a shared `#catModal` popup after `#lightbox`,
+      styled in the unnumbered "CATALOG MODAL" CSS block right after §20 Lightbox
+      (same `hidden`/`.is-open` pattern, reuses `--z-lb`). New JS: main.js module 17 —
+      clones the clicked category's template into the modal, reads that category's
+      title/description live off the DOM (never duplicated, so it can't drift out of
+      sync with an admin-panel edit), and builds a prefilled `wa.me` link using the
+      existing `WHATSAPP_NUMBER` constant. Escape closes it via the existing §13
+      handler (extended, not duplicated). Initially (previous session) each item was a
+      generic icon+name+desc placeholder decomposed from the category's own approved
+      copy, with no real product data — see the upgrade below.
+- [x] **Catalog items upgraded to real product cards (photo / optional price / stock
+      status).** The owner has real breed-wise stock, so each `.catmodal__item` is now
+      a product card: `<figure class="ph catmodal__item-img"><img ...></figure>` (reuses
+      the site's existing `.ph` graceful photo-frame — empty/broken `src` shows the
+      warm-gradient-and-paw-print fallback everywhere else on the site already uses, no
+      separate "no photo" state was built), a name/price row (`h4` name doubles as the
+      breed/product name — no separate breed field), an **optional free-text price**
+      (`<span class="catmodal__item-price" data-field="cat-N-catalog-M-price" hidden>` —
+      rendered only when non-empty; this is the practical resolution of §2's previously
+      open "should prices be shown" question — it's now a per-product owner choice, not
+      a site-wide one), the existing description `<p>`, and an in-stock/unavailable pill
+      (`<span class="catmodal__item-badge is-avail|is-unavail" data-field="cat-N-catalog-M-avail">`,
+      "In Stock" / "Currently Unavailable", defaults to in-stock). The per-item icon
+      (`.catmodal__item-ic`) was removed — photos replace it as the primary visual — and
+      its now-orphaned tint CSS rules were deleted along with it (confirmed via grep
+      that nothing else referenced them). The photo's `<img>` carries two space-separated
+      `data-field` keys on one element (`cat-N-catalog-M-img-src cat-N-catalog-M-img-alt`),
+      matching the same convention already used for the category cards' own images. The
+      19 items seeded in the previous session kept their original name/desc text
+      unchanged — only the markup was restructured — and now start with an empty photo
+      (shows the fallback) and no price (hidden) until the owner fills in real photos/
+      prices from `admin/`.
+      **Cursor-tilt inside the modal:** main.js module 16 binds its tilt/paw-trail
+      listeners once, at page load, to whatever `.ph` elements exist at that moment.
+      The catalog modal's product-photo `.ph` frames don't exist then — they're cloned
+      from each category's `<template>` only when "View Catalog" is clicked, strictly
+      after that one-time binding pass — so they never receive the tilt effect and stay
+      static, by construction, with zero code changes needed either way. This was
+      judged a fine, low-risk choice for a small product-grid popup (not the hero/
+      category showcase) and left as-is; documented in a CSS comment right above
+      `.catmodal` in `style.css` so a future session doesn't mistake it for a bug.
+      main.js module 14 (broken-image fallback) got the opposite treatment: its
+      per-image bind logic was extracted into a named `bindBrokenImageFallback(img)`
+      function and is explicitly re-run on the modal's cloned photos from `openCatalog()`
+      in module 17 — that one affects the default "no photo yet" appearance for every
+      seeded item, so it couldn't be skipped the same way tilt was. This was the only
+      reason main.js needed a version bump this session.
+      **The owner can manage all of this themselves** from `admin/` — each of the 6
+      category cards' nested "Catalog items" list now offers Product/Breed Name, Photo
+      URL (with a hint pointing at `assets/img/...`), Photo Alt Text, Price (optional,
+      with a hint), Description, and a "Currently in stock" checkbox — same
+      state → `readCatalogsFromDoc`/`buildCatalogItemEl`/`applyCatalogsToDoc` →
+      `buildDocument()` pipeline already used for Reviews and FAQ, and the same inline
+      per-item mini-form construction style those two lists already use. The item data
+      model is `{ id, name, desc, img, imgAlt, price, available }`.
 
 ### Blocked on the owner
 
@@ -177,8 +325,12 @@ Escape closes overlays · broken-image fallback · marquee re-measure on resize.
       Their GMB has real interior photos; those should replace the demos.
       Put them in `assets/img/`, resize ≤1200px, convert to WebP, ≤200 KB each.
 - [ ] **`og-cover.jpg`** (1200×630) for WhatsApp/Facebook link previews — does not exist yet.
-- [ ] **Real domain** — replace every `www.vspetshop.in`.
+- [ ] **Real domain** — replace every `www.vspetshop.in`. The owner can now do this
+      themselves from `admin/` (Site Settings → Domain) once the domain is known —
+      still blocked only on *knowing* the domain, not on someone editing HTML by hand.
 - [ ] **YouTube URL** — then remove the `hidden` attribute on the two `.soc--yt` links.
+      Also now doable from `admin/` (Business Info → YouTube Channel URL + the
+      "Show YouTube link" checkbox) once the owner has the channel URL.
 
 ### Possible next steps (not started)
 
@@ -207,3 +359,63 @@ comm -23 <(grep -o 'href="#i-[a-z-]*"' index.html | sed 's/href="#//;s/"//' | so
 
 The CSS linter in this workspace warns about physical properties
 (`width` vs `inline-size`). Those warnings are cosmetic — ignore them.
+
+Also check `admin.js` still parses and still has no `fetch()` calls:
+
+```bash
+node --check admin/assets/js/admin.js
+grep -n "fetch(" admin/assets/js/admin.js   # should match nothing except comments
+```
+
+---
+
+## 9. Admin panel (`admin/`) — why it works the way it does
+
+**The constraint tension.** §1's hard constraints rule out a backend entirely (no PHP,
+no Node, no database). A normal admin panel needs somewhere to write changes to and a
+server to serve them from — this site has neither, and adding either would break
+"opens by double-clicking `index.html`" and "runs on Hostinger shared static hosting."
+So a *live*, persistent, click-and-it's-published admin panel is not possible here
+without violating §1. That was true before this feature and is still true after it —
+this section exists so a future session doesn't try to "fix" that by reaching for a
+database or a serverless function.
+
+**The chosen design.** `admin/index.html` is a second, separate static page. The owner
+opens it (by double-click, same as the main site) and uses `<input type="file" multiple>`
+to hand it their local `index.html` (required) and optionally `main.js`, `robots.txt`,
+`sitemap.xml`, `404.html`. Everything after that happens **in browser memory only**:
+
+1. Files are read with `FileReader` — never `fetch()`, which can't reliably read local
+   files from a `file://` page in Chrome.
+2. `index.html`'s text is parsed into an in-memory `Document` with `DOMParser`.
+3. Every editable spot in `index.html` carries a stable `data-field="..."` attribute
+   (added across the whole page for this feature — see §3's file map entry and the
+   "Where things live" bullet above). `admin.js` finds elements by that attribute, not
+   by line number or DOM position, so re-ordering sections later won't silently break it.
+4. The owner edits plain form fields; a live `<iframe srcdoc>` preview re-renders the
+   in-memory document (debounced) so they see the result before committing to anything.
+5. "Save & Download" re-serializes the edited `Document` (`'<!DOCTYPE html>\n' +
+   doc.documentElement.outerHTML`) into a `Blob` and downloads it as `index.html` via a
+   temporary `<a download>`. If the phone/WhatsApp number or shop name changed and
+   `main.js` was also uploaded, an updated `main.js` is offered too — only its two
+   `WHATSAPP_NUMBER` / `SHOP_NAME` lines change, everything else stays byte-identical
+   (targeted regex replace, not a rewrite). If the domain changed, the same literal
+   string replace is applied to `robots.txt` / `sitemap.xml` / `404.html` if they were
+   also uploaded, and offered as extra downloads.
+6. **The owner still has to upload those downloaded files to Hostinger themselves**
+   (File Manager or FTP) — the tool says so in a permanent on-screen box after saving.
+   Nothing is "published" by this tool. That's the deliberate trade-off: no backend
+   means no live editing, so the tool edits a *local copy* and hands back a *file* —
+   the human is the last step in the loop, same as any manual edit would require.
+
+**Passphrase gate.** `admin/index.html` sits behind a passphrase prompt implemented in
+`admin/assets/js/admin.js` (a `<dialog>`, SHA-256 hash comparison via `crypto.subtle`).
+The default passphrase is documented — including exactly how to change it — in a
+comment at the top of `admin/assets/js/admin.js`. **This is a client-side speed bump,
+not authentication.** Anyone who can view-source the page can read that same comment
+and the hash, and can bypass the gate entirely. It does not protect anything sensitive
+and must never be treated as real access control. Consequently: `admin/index.html`
+carries `<meta name="robots" content="noindex, nofollow">`, `robots.txt` disallows
+`/admin/`, and the UI itself shows a permanent on-screen warning saying not to share
+the admin link publicly. Don't remove any of those three and don't let anyone mistake
+this gate for real security.

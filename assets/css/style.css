@@ -72,6 +72,7 @@
   --z-nav: 120;
   --z-fab: 130;
   --z-lb: 200;
+  --z-pawtrail: 210;
 }
 
 /* ---------- 2. RESET / BASE ---------- */
@@ -208,13 +209,23 @@ iframe{ border:0; display:block; }
   position:relative; margin:0; overflow:hidden;
   background:linear-gradient(135deg,#FFE0BC,#FFC98F 45%,#FDBA74);
   border-radius:var(--r-lg);
+  --tiltX:0deg; --tiltY:0deg; --tiltZ:1;   /* set by main.js §16 on mousemove */
 }
 .ph::after{
   content:""; position:absolute; inset:0; pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52' fill='%23ffffff' opacity='.35'%3E%3Cellipse cx='13' cy='19' rx='5' ry='6.4'/%3E%3Cellipse cx='23' cy='13' rx='5.4' ry='6.9'/%3E%3Cellipse cx='34' cy='15' rx='5.4' ry='6.9'/%3E%3Cellipse cx='43' cy='23' rx='4.8' ry='5.9'/%3E%3Cpath d='M26 25c7 0 13 5 13 11 0 5-3.8 8-8.6 8-2.2 0-3.2-.9-4.4-.9s-2.2.9-4.4.9c-4.8 0-8.6-3-8.6-8 0-6 6-11 13-11Z'/%3E%3C/svg%3E") center/64px no-repeat;
   z-index:0;
 }
-.ph > img{ position:relative; z-index:1; width:100%; height:100%; object-fit:cover; }
+/* Live pet reaction: the image tilts toward the cursor and perks up
+   slightly (main.js §16 sets --tiltX/--tiltY/--tiltZ on mousemove;
+   desktop-with-mouse only, and skipped entirely under reduced motion). */
+.ph > img{
+  position:relative; z-index:1; width:100%; height:100%; object-fit:cover;
+  transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ));
+  transition:transform 140ms var(--e-out), filter var(--t-fast) var(--e-out);
+  will-change:transform;
+}
+.ph.is-live > img{ filter:brightness(1.04) saturate(1.08); }
 .ph.is-broken > img{ display:none; }
 
 /* ---------- 6. TOPBAR ---------- */
@@ -394,6 +405,7 @@ iframe{ border:0; display:block; }
 
 .cat__title{ font-size:1.5rem; font-weight:800; margin-bottom:.3em; }
 .cat__body p{ font-size:.95rem; color:var(--ink-soft); margin-bottom:var(--s-2); }
+.cat__body .btn + .btn{ margin-left:8px; }
 .cat__img{
   align-self:flex-end; width:80%; aspect-ratio:1;
   margin:auto -24px 0 0;                 /* bleed into the card's bottom-right corner */
@@ -401,6 +413,39 @@ iframe{ border:0; display:block; }
   transition:transform var(--t-base) var(--e-out);
 }
 .cat:hover .cat__img{ transform:scale(1.05); }
+
+/* Species-specific "alive" motion on hover, layered on top of the
+   §5 cursor-tilt (each keyframe re-states perspective/rotateX/rotateY/
+   scale from --tiltX/--tiltY/--tiltZ so the two effects compose instead
+   of one clobbering the other). This can't move actual limbs/wings —
+   it's a photo, not a rig — so each species gets a whole-image motion
+   signature that reads as that behaviour: dogs get a bouncy trot, cats
+   a slow prowling drift, birds a fast wing-flutter shake. Neutralised
+   under prefers-reduced-motion by the global rule in §23 (animation-
+   duration collapses to .01ms there). */
+@keyframes trotDog{
+  0%,100%{ transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translateX(0) rotate(0deg); }
+  25%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translateX(-4px) rotate(-1.6deg); }
+  50%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translateX(0) translateY(-2px) rotate(0deg); }
+  75%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translateX(4px) rotate(1.6deg); }
+}
+@keyframes roamCat{
+  0%,100%{ transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translate(0,0); }
+  25%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translate(4px,-2px); }
+  50%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translate(1px,-5px); }
+  75%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) translate(-4px,-2px); }
+}
+@keyframes flutterBird{
+  0%,100%{ transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) rotate(0deg) translateY(0); }
+  20%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) rotate(-3.5deg) translateY(-3px); }
+  40%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) rotate(3deg) translateY(0); }
+  60%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) rotate(-2.5deg) translateY(-3px); }
+  80%{     transform:perspective(700px) rotateX(var(--tiltY)) rotateY(var(--tiltX)) scale(var(--tiltZ)) rotate(2deg) translateY(0); }
+}
+.cat--amber:hover .cat__img img,
+.ph--hero:hover img{ animation:trotDog 550ms ease-in-out infinite; }     /* Dogs — bouncy trot + tail-wag-like wiggle */
+.cat--violet:hover .cat__img img{ animation:roamCat 2.6s ease-in-out infinite; }  /* Cats — slow prowling roam */
+.cat--sky:hover .cat__img img{ animation:flutterBird 380ms ease-in-out infinite; } /* Birds — quick wing-flutter shake */
 
 /* ---------- 10. RIBBON MARQUEE ---------- */
 .ribbon{
@@ -676,6 +721,24 @@ iframe{ border:0; display:block; }
 .mobar__btn--wa{ background:var(--wa-dark); color:#fff; }
 .mobar__btn--dir{ background:var(--dark); color:var(--ink-invert); }
 
+/* Paw-print cursor trail — spawned by main.js §16 while hovering a
+   pet photo (.ph). Each print is a one-shot element: it animates
+   once then removes itself on animationend. Fixed-positioned so
+   scroll offset never matters; never created under reduced motion
+   or on touch (see the §16 guard clause). */
+.paw-trail{
+  position:fixed; left:0; top:0; z-index:var(--z-pawtrail);
+  width:20px; height:20px; color:var(--brand-700);
+  pointer-events:none; opacity:.6;
+  transform:translate(-50%,-50%) rotate(var(--pt-rot,0deg)) scale(.5);
+  animation:pawFade 650ms var(--e-out) forwards;
+}
+.paw-trail .ic{ width:100%; height:100%; }
+@keyframes pawFade{
+  from{ opacity:.6; transform:translate(-50%,-50%) rotate(var(--pt-rot,0deg)) scale(.5); }
+  to{ opacity:0; transform:translate(-50%,-90%) rotate(var(--pt-rot,0deg)) scale(1); }
+}
+
 /* ---------- 20. LIGHTBOX ---------- */
 .lb{
   position:fixed; inset:0; z-index:var(--z-lb);
@@ -697,6 +760,92 @@ iframe{ border:0; display:block; }
   transition:background-color var(--t-fast) ease, transform var(--t-fast) ease;
 }
 .lb__close:hover{ background:rgba(255,255,255,.26); transform:rotate(90deg); }
+
+/* ---------- CATALOG MODAL (companion to §20 Lightbox) ----------
+   Not numbered into the main §1–§23 sequence on purpose — it was added
+   in a later session and renumbering every section after it would be a
+   disruptive, unrelated diff. Same fixed-overlay/backdrop/hidden-attribute
+   pattern as the lightbox above, reusing --z-lb (only one full-screen
+   overlay — lightbox or catalog modal — is ever open at a time). Opened/
+   closed by main.js §17.
+
+   Catalog items are real product cards (photo + name + optional price +
+   stock badge + description) as of the session that added owner-editable
+   inventory — see CLAUDE.md §7. The photo reuses .ph (§5 PHOTO FRAME) for
+   the site's existing graceful broken/empty-image fallback, so a product
+   with no photo yet just shows the warm gradient + paw watermark, same as
+   everywhere else on the site.
+
+   NOTE on cursor-tilt: .ph elements normally get the §16 cursor-tilt +
+   paw-trail treatment from main.js module 16, but that module binds its
+   mousemove listeners once, at page load, to whatever .ph elements exist
+   in the DOM at that moment. This modal's product-photo .ph frames don't
+   exist yet at that point — they're cloned from each category's <template>
+   only when "View Catalog" is clicked — so they never receive that
+   binding and stay static (no tilt, no paw-trail) by construction, with
+   no extra code needed either way. That's a deliberate, low-risk choice
+   for a small product-grid popup, not the hero/category showcase, so it
+   was left as-is rather than adding a rebind step. main.js module 14's
+   broken-image fallback, by contrast, IS explicitly rebound for photos
+   added here (see openCatalog() in main.js §17) — that one affects the
+   default "no photo yet" look for every seeded item, so it couldn't be
+   skipped the same way. */
+.catmodal{
+  position:fixed; inset:0; z-index:var(--z-lb);
+  display:grid; place-items:center; padding:24px;
+  background:rgba(20,11,3,.92); backdrop-filter:blur(6px);
+  opacity:0; transition:opacity var(--t-base) ease;
+}
+.catmodal.is-open{ opacity:1; }
+.catmodal__panel{
+  width:min(760px,92vw); max-height:86vh; overflow-y:auto;
+  background:var(--bg); border-radius:var(--r-xl);
+  padding:32px; box-shadow:var(--sh-lg);
+  transform:translateY(18px); transition:transform var(--t-base) var(--e-out);
+}
+.catmodal.is-open .catmodal__panel{ transform:none; }
+.catmodal__head{ margin-bottom:var(--s-3); }
+.catmodal__head h3{ font-size:1.5rem; margin-bottom:.2em; }
+.catmodal__head p{ color:var(--ink-soft); margin:0; }
+.catmodal__grid{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-2);
+  margin-bottom:var(--s-3);
+}
+.catmodal__item{
+  background:#fff; border-radius:var(--r-lg); overflow:hidden;
+  box-shadow:var(--sh-sm); border:1px solid rgba(255,255,255,.9);
+  display:flex; flex-direction:column;
+}
+.catmodal__item-img{
+  aspect-ratio:1; border-radius:0; margin:0; flex:none;
+}
+.catmodal__item-body{
+  padding:14px 16px 16px; display:flex; flex-direction:column; gap:8px;
+}
+.catmodal__item-row{
+  display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+}
+.catmodal__item h4{ font-size:1.02rem; margin:0; }
+.catmodal__item-price{
+  font-family:'Rubik',sans-serif; font-weight:700; font-size:.92rem;
+  color:var(--brand-700); white-space:nowrap; flex:none;
+}
+.catmodal__item p{ margin:0; color:var(--ink-soft); font-size:.9rem; }
+.catmodal__item-badge{
+  display:inline-flex; align-items:center; align-self:flex-start;
+  font-family:'Rubik',sans-serif; font-weight:700; font-size:.74rem;
+  letter-spacing:.03em; text-transform:uppercase;
+  padding:5px 12px; border-radius:var(--r-pill);
+}
+.catmodal__item-badge.is-avail{ background:#DCFCE7; color:#15803D; }
+.catmodal__item-badge.is-unavail{ background:#EAE1D4; color:#8A7358; }
+.catmodal__close{
+  position:absolute; top:20px; right:20px;
+  display:grid; place-items:center; width:48px; height:48px;
+  border-radius:50%; background:rgba(255,255,255,.14); color:#fff; font-size:24px;
+  transition:background-color var(--t-fast) ease, transform var(--t-fast) ease;
+}
+.catmodal__close:hover{ background:rgba(255,255,255,.26); transform:rotate(90deg); }
 
 /* ---------- 21. SCROLL REVEAL ---------- */
 .reveal{ opacity:0; transform:translateY(26px); transition:opacity 620ms var(--e-out), transform 620ms var(--e-out); }
@@ -814,6 +963,14 @@ iframe{ border:0; display:block; }
   .contact__map iframe{ height:300px; }
   .contact__actions .btn{ flex:1 1 100%; }
 
+  .catmodal{ padding:14px; }
+  .catmodal__panel{ padding:22px; max-height:90vh; }
+  .catmodal__grid{ grid-template-columns:1fr; }
+  .catmodal__item-img{ aspect-ratio:16/10; }        /* full-width single column now — a square photo would be needlessly tall */
+  .catmodal__item-body{ padding:12px 14px 14px; }
+  .cat__body .btn{ width:100%; }
+  .cat__body .btn + .btn{ margin-left:0; margin-top:8px; }
+
   .cta__in{ padding:44px 22px; }
   .cta__btns .btn{ flex:1 1 100%; }
   .cta__paw{ font-size:150px; right:-20px; bottom:-24px; }
@@ -836,6 +993,8 @@ iframe{ border:0; display:block; }
   }
   .reveal, [data-stagger] > *, [data-anim]{ opacity:1 !important; transform:none !important; }
   .ph--float{ animation:none; }
+  .ph > img{ transform:none !important; }
+  .paw-trail{ display:none !important; }
 }
 
 @media print{
