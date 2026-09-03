@@ -292,6 +292,7 @@
         note.textContent = 'Opening WhatsApp with your message — just hit send.';
         setTimeout(function () { note.textContent = ''; }, 6000);
       }
+      pawBurst(form.querySelector('button[type="submit"]'));
       form.reset();
     });
   }
@@ -503,6 +504,170 @@
     catModal.addEventListener('click', function (e) {
       if (e.target === catModal) closeCatalog();
     });
+  }
+
+  /* ---------- 18. Category favourites (heart toggle, localStorage) ----------
+     Per-visitor convenience only — not admin-editable, doesn't sync
+     anywhere, doesn't touch any data-field content. Persists as a plain
+     array of category keys ("cat-1".."cat-6") under one clearly-
+     namespaced localStorage key so it can never collide with anything
+     else this origin might ever store. All storage access is wrapped in
+     try/catch: getItem/setItem can both throw in private-browsing or
+     storage-blocked contexts, and a storage failure must never break
+     the page — favourites simply won't persist that session. */
+  var FAV_KEY = 'vspetshop:favorites';
+
+  function readFavorites() {
+    try {
+      var raw = window.localStorage.getItem(FAV_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeFavorites(arr) {
+    try {
+      window.localStorage.setItem(FAV_KEY, JSON.stringify(arr));
+    } catch (e) {
+      // storage blocked/full/private mode — fail silently
+    }
+  }
+
+  var favButtons = $$('[data-fav]');
+  if (favButtons.length) {
+    var favorites = readFavorites();
+
+    // Reads the category's live title text (same "read it off the DOM,
+    // don't duplicate it" approach §17's catalog modal uses for cat-N
+    // title/desc) so the aria-label always matches whatever the owner
+    // has renamed the category to in admin, without this module needing
+    // to know about data-field at all.
+    function favLabel(btn, isFav) {
+      var card = btn.closest('.cat');
+      var titleEl = card ? $('.cat__title', card) : null;
+      var name = titleEl ? titleEl.textContent.trim() : 'this category';
+      return (isFav ? 'Remove ' : 'Add ') + name + (isFav ? ' from favourites' : ' to favourites');
+    }
+
+    function applyFavState(btn, isFav) {
+      btn.setAttribute('aria-pressed', String(isFav));
+      btn.setAttribute('aria-label', favLabel(btn, isFav));
+    }
+
+    favButtons.forEach(function (btn) {
+      var key = btn.getAttribute('data-fav');
+      applyFavState(btn, favorites.indexOf(key) !== -1);
+
+      btn.addEventListener('click', function () {
+        var idx     = favorites.indexOf(key);
+        var nowFav  = idx === -1;
+        if (nowFav) favorites.push(key);
+        else favorites.splice(idx, 1);
+        writeFavorites(favorites);
+        applyFavState(btn, nowFav);
+
+        if (!reduceMotion) {
+          btn.classList.remove('is-pop');
+          void btn.offsetWidth; // restart the animation on rapid re-clicks
+          btn.classList.add('is-pop');
+        }
+      });
+
+      btn.addEventListener('animationend', function () {
+        btn.classList.remove('is-pop');
+      });
+    });
+  }
+
+  /* ---------- 19. Paw-burst on successful WhatsApp submit ----------
+     Called from §10 right after the WhatsApp deep link opens. Spawns a
+     short burst of paw icons popping outward from the submit button —
+     the same one-shot spawn/animate/remove-on-animationend idiom as the
+     §16 .paw-trail cursor trail, just radiating from a point instead of
+     following the mouse. Skipped entirely under reduced motion (the
+     existing #formNote text is enough on its own then). Purely a visual
+     add-on: never touches form.reset() or the validation/submit logic. */
+  function pawBurst(originEl) {
+    if (reduceMotion || !originEl) return;
+    var rect  = originEl.getBoundingClientRect();
+    var cx    = rect.left + rect.width / 2;
+    var cy    = rect.top + rect.height / 2;
+    var count = 6 + Math.round(Math.random() * 2); // 6-8 paws
+
+    for (var i = 0; i < count; i++) {
+      (function (i) {
+        var angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+        var dist  = 60 + Math.random() * 40;
+        var paw   = document.createElement('span');
+        paw.className = 'paw-burst';
+        paw.innerHTML  = '<svg class="ic"><use href="#i-paw"/></svg>';
+        paw.style.left = cx + 'px';
+        paw.style.top  = cy + 'px';
+        paw.style.setProperty('--pb-x', (Math.cos(angle) * dist).toFixed(1) + 'px');
+        paw.style.setProperty('--pb-y', (Math.sin(angle) * dist).toFixed(1) + 'px');
+        paw.style.setProperty('--pb-rot', (Math.random() * 60 - 30).toFixed(1) + 'deg');
+        paw.style.setProperty('--pb-dur', (600 + Math.random() * 300).toFixed(0) + 'ms');
+        document.body.appendChild(paw);
+        paw.addEventListener('animationend', function () { paw.remove(); });
+      })(i);
+    }
+  }
+
+  /* ---------- 20. Pet care tip strip — gentle auto-rotation ----------
+     Rotates through a handful of generic, well-known pet-care facts —
+     not claims about this shop (CLAUDE.md §6 is about the latter; this
+     is a different, safe category of content). Crossfades using the
+     .is-fading opacity transition already defined on .tip-strip__text,
+     on a 5.5s timer, paused on hover/focus so nobody reading it loses
+     their place. Under prefers-reduced-motion no interval is ever
+     started — the first tip just shows, statically, permanently. */
+  var tipTextEl = $('#tipStripText');
+  var tipCardEl = $('#tipStrip');
+  if (tipTextEl && tipCardEl) {
+    var TIPS = [
+      "A dog's sense of smell is tens of thousands of times stronger than a human's.",
+      'Cats spend around 70% of their life asleep.',
+      'Puppies are usually ready for their first vaccinations around 6-8 weeks old.',
+      "A rabbit's teeth never stop growing, which is why they need things to gnaw on.",
+      'Regular nail trims help keep a dog’s paws healthy and its gait comfortable.',
+      'Fresh water should be available for pets at all times, not just at mealtimes.'
+    ];
+    var tipIndex = 0;
+    var tipTimer = null;
+
+    function showTip(i) {
+      tipTextEl.textContent = TIPS[i];
+    }
+
+    function nextTip() {
+      tipTextEl.classList.add('is-fading');
+      setTimeout(function () {
+        tipIndex = (tipIndex + 1) % TIPS.length;
+        showTip(tipIndex);
+        tipTextEl.classList.remove('is-fading');
+      }, 220);
+    }
+
+    function startTips() {
+      if (tipTimer || reduceMotion) return;
+      tipTimer = setInterval(nextTip, 5500);
+    }
+    function stopTips() {
+      if (!tipTimer) return;
+      clearInterval(tipTimer);
+      tipTimer = null;
+    }
+
+    showTip(0);
+    if (!reduceMotion) {
+      startTips();
+      tipCardEl.addEventListener('mouseenter', stopTips);
+      tipCardEl.addEventListener('mouseleave', startTips);
+      tipCardEl.addEventListener('focusin', stopTips);
+      tipCardEl.addEventListener('focusout', startTips);
+    }
   }
 
 })();

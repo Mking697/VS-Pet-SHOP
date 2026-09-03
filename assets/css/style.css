@@ -140,7 +140,19 @@ iframe{ border:0; display:block; }
 .container--narrow{ width:min(100% - var(--gutter), 900px); }
 
 .section{ padding:var(--s-7) 0; position:relative; }
-.section--alt{ background:var(--bg-alt); }
+/* Ambient paw-print texture — same visual language as the §5 .ph::after
+   photo-frame watermark, scaled down and tiled as a background-image
+   (not an overlay element, so it needs no z-index/stacking care and
+   can never intercept a click). Kept at 5% opacity on --brand-700 (the
+   photo-frame version is 35% white on a warm-gradient background; this
+   is on plain warm cream, so it has to be much fainter to stay a "you
+   almost don't notice it" texture rather than a pattern). Static —
+   nothing to guard under prefers-reduced-motion. */
+.section--alt{
+  background:var(--bg-alt)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cg fill='%23C2410C' opacity='.05'%3E%3Cellipse cx='13' cy='19' rx='5' ry='6.4'/%3E%3Cellipse cx='23' cy='13' rx='5.4' ry='6.9'/%3E%3Cellipse cx='34' cy='15' rx='5.4' ry='6.9'/%3E%3Cellipse cx='43' cy='23' rx='4.8' ry='5.9'/%3E%3Cpath d='M26 25c7 0 13 5 13 11 0 5-3.8 8-8.6 8-2.2 0-3.2-.9-4.4-.9s-2.2.9-4.4.9c-4.8 0-8.6-3-8.6-8 0-6 6-11 13-11Z'/%3E%3C/g%3E%3C/svg%3E")
+    0 0/120px 120px repeat;
+}
 
 .s-head{ max-width:720px; margin:0 auto var(--s-5); text-align:center; }
 .s-head--row{
@@ -447,6 +459,32 @@ iframe{ border:0; display:block; }
 .cat--violet:hover .cat__img img{ animation:roamCat 2.6s ease-in-out infinite; }  /* Cats — slow prowling roam */
 .cat--sky:hover .cat__img img{ animation:flutterBird 380ms ease-in-out infinite; } /* Birds — quick wing-flutter shake */
 
+/* Favourite heart toggle — top-right corner, above the §9 .cat__img
+   bleed (which only occupies the bottom-right) and clear of the
+   .cat__body buttons below. Real <button> with aria-pressed, state
+   handled by main.js module 18; purely a per-visitor localStorage
+   convenience, not admin-editable content. */
+.cat__fav{
+  position:absolute; top:16px; right:16px; z-index:2;
+  display:grid; place-items:center; width:40px; height:40px;
+  border-radius:50%; background:rgba(255,255,255,.82); color:var(--ink);
+  box-shadow:var(--sh-sm);
+  transition:transform var(--t-fast) var(--e-out), background-color var(--t-base) ease, color var(--t-base) ease;
+}
+.cat__fav .ic{ width:19px; height:19px; stroke-width:2.1; }
+.cat__fav:hover{ background:#fff; transform:translateY(-2px); }
+.cat__fav[aria-pressed="true"]{ background:#fff; color:#BE123C; }
+.cat__fav[aria-pressed="true"] .ic{ fill:currentColor; }
+/* Satisfying pop on toggle, reusing the site's existing motion tokens
+   rather than an invented duration — combined --t-fast + --t-base. */
+.cat__fav.is-pop{ animation:favPop calc(var(--t-fast) + var(--t-base)) var(--e-out); }
+@keyframes favPop{
+  0%{ transform:scale(1) rotate(0deg); }
+  35%{ transform:scale(1.32) rotate(-8deg); }
+  62%{ transform:scale(.92) rotate(5deg); }
+  100%{ transform:scale(1) rotate(0deg); }
+}
+
 /* ---------- 10. RIBBON MARQUEE ---------- */
 .ribbon{
   background:var(--brand); color:#fff; overflow:hidden;
@@ -557,6 +595,36 @@ iframe{ border:0; display:block; }
 .rev__card figcaption{ margin-top:auto; }
 .rev__card figcaption b{ display:block; font-family:'Rubik',sans-serif; font-size:.98rem; }
 .rev__card figcaption span{ font-size:.85rem; color:var(--ink-soft); }
+
+/* ---------- PET CARE TIP STRIP (companion, unnumbered — see the
+   CATALOG MODAL block's comment for why new additions get their own
+   unnumbered block instead of renumbering §1–§23) ----------
+   Slim rotating banner of generic pet-care trivia between Reviews and
+   FAQ. Same claymorphism card language as the rest of the site (pill
+   radius, soft shadow, tinted icon chip). Rotation is main.js module
+   20: crossfade via the .is-fading opacity transition below, paused
+   on hover/focus, and left showing only the first tip — no interval
+   ever starts — under prefers-reduced-motion. */
+.tip-strip{ padding:var(--s-4) 0; }
+.tip-strip__card{
+  display:flex; align-items:center; gap:16px;
+  max-width:760px; margin:0 auto;
+  background:#fff; border-radius:var(--r-pill);
+  padding:16px 28px; box-shadow:var(--sh-sm);
+  border:1px solid var(--line);
+  transition:box-shadow var(--t-base) ease;
+}
+.tip-strip__card:hover, .tip-strip__card:focus-visible{ box-shadow:var(--sh-md); }
+.tip-strip__ic{
+  display:grid; place-items:center; width:36px; height:36px; flex:none;
+  border-radius:50%; background:var(--brand-soft); color:var(--brand-700);
+}
+.tip-strip__ic .ic{ width:17px; height:17px; }
+.tip-strip__text{
+  margin:0; font-size:.96rem; font-weight:600; color:var(--ink-soft);
+  transition:opacity var(--t-base) ease;
+}
+.tip-strip__text.is-fading{ opacity:0; }
 
 /* ---------- 15. FAQ ---------- */
 .faq{ display:grid; gap:12px; }
@@ -737,6 +805,29 @@ iframe{ border:0; display:block; }
 @keyframes pawFade{
   from{ opacity:.6; transform:translate(-50%,-50%) rotate(var(--pt-rot,0deg)) scale(.5); }
   to{ opacity:0; transform:translate(-50%,-90%) rotate(var(--pt-rot,0deg)) scale(1); }
+}
+
+/* ---------- FORM PAW-BURST (companion to the .paw-trail above; not
+   numbered into the main §1–§23 sequence, same reasoning as the
+   CATALOG MODAL block below) ----------
+   Fired once by main.js module 19 right after a successful WhatsApp
+   enquiry submit (module 10). Same one-shot spawn/animate/remove-on-
+   animationend idiom as .paw-trail: a handful of small paw icons pop
+   outward from the submit button and fade over ~600-900ms, then clean
+   themselves up. Never spawned at all under prefers-reduced-motion —
+   module 19 checks that before doing anything — but the CSS also
+   carries the same belt-and-braces hide rule as .paw-trail in §23. */
+.paw-burst{
+  position:fixed; left:0; top:0; z-index:var(--z-pawtrail);
+  width:18px; height:18px; color:var(--wa-dark);
+  pointer-events:none;
+  transform:translate(-50%,-50%) rotate(var(--pb-rot,0deg)) scale(.4);
+  animation:pawBurst var(--pb-dur,750ms) var(--e-out) forwards;
+}
+.paw-burst .ic{ width:100%; height:100%; }
+@keyframes pawBurst{
+  0%{   opacity:1; transform:translate(-50%,-50%) rotate(var(--pb-rot,0deg)) scale(.4); }
+  100%{ opacity:0; transform:translate(calc(-50% + var(--pb-x,0px)), calc(-50% + var(--pb-y,0px))) rotate(var(--pb-rot,0deg)) scale(1.1); }
 }
 
 /* ---------- 20. LIGHTBOX ---------- */
@@ -963,6 +1054,12 @@ iframe{ border:0; display:block; }
   .contact__map iframe{ height:300px; }
   .contact__actions .btn{ flex:1 1 100%; }
 
+  .cat__fav{ width:36px; height:36px; top:12px; right:12px; }
+  .cat__fav .ic{ width:17px; height:17px; }
+
+  .tip-strip__card{ padding:14px 18px; gap:12px; }
+  .tip-strip__text{ font-size:.88rem; }
+
   .catmodal{ padding:14px; }
   .catmodal__panel{ padding:22px; max-height:90vh; }
   .catmodal__grid{ grid-template-columns:1fr; }
@@ -995,6 +1092,8 @@ iframe{ border:0; display:block; }
   .ph--float{ animation:none; }
   .ph > img{ transform:none !important; }
   .paw-trail{ display:none !important; }
+  .paw-burst{ display:none !important; }
+  .cat__fav.is-pop{ animation:none; }
 }
 
 @media print{

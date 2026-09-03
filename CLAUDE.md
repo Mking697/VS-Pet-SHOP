@@ -142,7 +142,7 @@ Birds, Pet Food, Grooming, Accessories) → tilted marquee ribbon → **6 servic
 **contact** (details + WhatsApp form + map) → CTA band → footer →
 floating WhatsApp FAB + back-to-top + mobile Call/WhatsApp/Directions bar.
 
-### JS modules in main.js (numbered 1–17)
+### JS modules in main.js (numbered 1–20)
 
 year · sticky header · nav drawer · scroll-spy active link · reveal+stagger observer ·
 counters · marquee init (clones the set, computes duration from width) · lightbox ·
@@ -162,7 +162,15 @@ popup. Title/lead are read live off that card's own `.cat__title` / `.cat__body 
 an admin-panel edit to either can't drift out of sync with the modal. Open/close
 mechanics are a direct copy of the §8 lightbox — `hidden` attribute + `.is-open` class,
 body scroll lock, focus moved to the close button on open and back to the trigger on
-close. Escape closes it via the existing §13 handler, extended rather than duplicated).
+close. Escape closes it via the existing §13 handler, extended rather than duplicated) ·
+**category favourites** (§18 — a heart-toggle `[data-fav="cat-N"]` button on each
+category card; state is a plain array in `localStorage['vspetshop:favorites']`, all
+access wrapped in try/catch, restored on load) · **paw-burst** (§19 — a
+`pawBurst(originEl)` helper called from §10 right after the WhatsApp deep link opens;
+spawns 6–8 one-shot `.paw-trail`-style paw elements from the submit button) ·
+**pet-care tip strip** (§20 — rotates `#tipStripText` through a fixed array of generic
+pet-care facts every 5.5s with a crossfade, paused on hover/focus, static on the first
+tip under `prefers-reduced-motion`).
 
 ---
 
@@ -209,11 +217,9 @@ close. Escape closes it via the existing §13 handler, extended rather than dupl
       depends on this rule — do not remove it.**
 - [x] Asset URLs carry `?v=N`. `.htaccess` caches CSS/JS for a year, so **bump that
       number whenever style.css or main.js changes**, or returning visitors keep the
-      stale file. Currently: `main.js?v=5` (bumped from v=4 — module 14's broken-image
-      fallback was refactored into a reusable `bindBrokenImageFallback()` and re-run on
-      the catalog modal's cloned product photos, see §7 catalog-items-as-product-cards
-      entry), `style.css?v=6` (bumped from v=5 for the catalog item → product card
-      restyle — index.html and 404.html both reference the same style.css version).
+      stale file. Currently: `main.js?v=6` (bumped from v=5 — added modules 18–20, see
+      the delight-pass entries below), `style.css?v=7` (bumped from v=6 for the same
+      pass — index.html and 404.html both reference the same style.css version).
 - [x] **`admin/` client-side content panel** — see §9. Tags almost every editable
       string, image URL and link on the page with a `data-field` attribute, parses a
       locally-selected copy of `index.html` (+ optionally `main.js`, `robots.txt`,
@@ -318,6 +324,50 @@ close. Escape closes it via the existing §13 handler, extended rather than dupl
       `buildDocument()` pipeline already used for Reviews and FAQ, and the same inline
       per-item mini-form construction style those two lists already use. The item data
       model is `{ id, name, desc, img, imgAlt, price, available }`.
+- [x] **Delight/polish pass** — requested as "use the `ui-ux-pro-max` skill and make
+      the site more attractive to pet lovers." That skill wasn't available this
+      session; the Claymorphism direction already documented in §4 was extended by
+      hand instead, purely additive on top of every existing component (nothing in
+      §16/§17 or any other prior work was touched). Four pieces:
+      - **Ambient paw-print texture on `.section--alt`** (CSS §3, where `.section--alt`
+        is defined) — the same paw-print visual language as the §5 `.ph::after` photo-
+        frame watermark, reused as a tiled `background-image` (not an overlay element,
+        so no z-index/click-interception risk) at 5% opacity on `--brand-700` instead
+        of the watermark's 35% white, because this sits on plain warm cream rather than
+        the photo-frame's warm gradient and needed to be far fainter to read as texture
+        rather than pattern. Static — nothing to guard under reduced-motion. Currently
+        affects Services, Gallery and FAQ (the three `.section--alt` sections).
+      - **Category favourites** — a `.cat__fav` heart-toggle button, top-right corner of
+        each of the 6 category cards (CSS appended into §9; the top-right corner was
+        chosen because `.cat__img` only bleeds into the *bottom*-right, and the existing
+        Enquire/Book-a-Slot + View Catalog buttons live in `.cat__body`, so there's no
+        overlap). Real `<button aria-pressed>` with an `aria-label` that's rebuilt from
+        the card's live `.cat__title` text on every toggle (so it can never drift out of
+        sync with an admin-panel rename), pop-bounce animation on toggle using
+        `calc(var(--t-fast) + var(--t-base))` and `var(--e-out)` — the site's existing
+        motion tokens, not an invented duration. State is main.js §18: one array in
+        `localStorage['vspetshop:favorites']` (e.g. `["cat-1","cat-3"]`), all reads/
+        writes wrapped in try/catch so a storage failure (private browsing, storage
+        blocked) never breaks the page — favourites just don't persist that session.
+        First use of `localStorage` in this project. Pure per-visitor convenience, not
+        admin-editable, no `data-field` involved.
+      - **Paw-burst on successful WhatsApp submit** — main.js §19's `pawBurst(originEl)`,
+        called from the existing §10 submit handler right after the WhatsApp deep link
+        opens (one line added; validation/`form.reset()`/everything else in §10 is
+        untouched). Spawns 6–8 `.paw-trail`-style one-shot paw elements (CSS: unnumbered
+        "FORM PAW-BURST" block next to `.paw-trail`) that pop outward from the submit
+        button and self-remove on `animationend` — the exact same idiom the existing
+        cursor paw-trail (§16) already uses, deliberately not a new mechanism. Skipped
+        entirely when `reduceMotion` is true (the existing `#formNote` text already
+        covers that case).
+      - **Rotating pet-care tip strip** — a new slim claymorphism strip between Reviews
+        and FAQ (`<section class="tip-strip">`, unnumbered "PET CARE TIP STRIP" CSS
+        block placed next to §15 FAQ). main.js §20 rotates six **generic, well-
+        established pet-care facts** (not claims about this shop — §6 is about the
+        latter, this is deliberately a different, safe category) every 5.5s with an
+        opacity crossfade, paused on hover/focus via `mouseenter/leave` +
+        `focusin/out`. Under `prefers-reduced-motion` no `setInterval` is ever started —
+        the first tip just shows, permanently, statically.
 
 ### Blocked on the owner
 
