@@ -33,9 +33,11 @@
    PASSPHRASE GATE — HOW TO CHANGE IT
    -----------------------------------
    The gate below compares SHA-256(passphrase) as a hex string against
-   ADMIN_PASS_HASH. The plaintext passphrase is never stored here.
-   The current default passphrase is:  vspetshop-admin-2026
-   To change it:
+   ADMIN_PASS_HASH. The plaintext passphrase is intentionally NEVER stored
+   in this file — this repo is public, and anything written here in plain
+   text (even in a comment) is effectively public too. The current
+   passphrase was shared with the shop owner directly (WhatsApp), not
+   committed anywhere. To change it:
      1. Open any browser console (on any page) and run:
           crypto.subtle.digest('SHA-256', new TextEncoder().encode('your-new-passphrase'))
             .then(buf => console.log([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('')))
@@ -52,7 +54,7 @@
 (function () {
   'use strict';
 
-  var ADMIN_PASS_HASH = 'a1e1c07adb2ba99f94dacae0dd7ecb9ee552cbf5779619e9dbcb47d0ab7c8633'; // sha256("vspetshop-admin-2026")
+  var ADMIN_PASS_HASH = 'f394908a5828a85a81f31dedc46326257e715bb56a27bc967430000e19f7be07'; // sha256 of the current passphrase — see comment block above, never write the plaintext here
   var OLD_DOMAIN = 'https://www.vspetshop.in';
 
   var $  = (s, c) => (c || document).querySelector(s);

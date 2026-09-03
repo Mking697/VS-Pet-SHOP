@@ -47,5 +47,19 @@ DirectoryIndex index.html
   Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
 
+# ---- Block public access to internal dev/doc files ----
+# The repo (including these files) deploys as-is via Hostinger's Git
+# integration, so anything tracked in git ends up in this folder. None of
+# these are secret, but none of them need to be directly browsable either.
+<FilesMatch "^(CLAUDE\.md|README\.md|\.gitignore|\.htaccess)$">
+  Require all denied
+</FilesMatch>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^(CLAUDE\.md|README\.md|\.gitignore|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+
 # ---- Custom 404 ----
 ErrorDocument 404 /404.html

@@ -59,7 +59,10 @@ VS Pet Shop/
 ├── CLAUDE.md           ← this file
 ├── README.md           Owner-facing deploy + edit guide
 ├── favicon.svg         Paw mark
-├── .htaccess           HTTPS force, gzip, cache headers, security headers, 404
+├── .htaccess           HTTPS force, gzip, cache headers, security headers, 404,
+│                       denies public access to CLAUDE.md/README.md/.gitignore
+│                       (the repo deploys as-is via Hostinger's Git integration,
+│                       so anything tracked in git lands in the web root)
 ├── robots.txt          Disallows /admin/ (see §9)
 ├── sitemap.xml
 ├── admin/              Client-side "admin panel" for content editing — no
@@ -460,12 +463,17 @@ to hand it their local `index.html` (required) and optionally `main.js`, `robots
 
 **Passphrase gate.** `admin/index.html` sits behind a passphrase prompt implemented in
 `admin/assets/js/admin.js` (a `<dialog>`, SHA-256 hash comparison via `crypto.subtle`).
-The default passphrase is documented — including exactly how to change it — in a
-comment at the top of `admin/assets/js/admin.js`. **This is a client-side speed bump,
-not authentication.** Anyone who can view-source the page can read that same comment
-and the hash, and can bypass the gate entirely. It does not protect anything sensitive
-and must never be treated as real access control. Consequently: `admin/index.html`
-carries `<meta name="robots" content="noindex, nofollow">`, `robots.txt` disallows
-`/admin/`, and the UI itself shows a permanent on-screen warning saying not to share
-the admin link publicly. Don't remove any of those three and don't let anyone mistake
-this gate for real security.
+How to change it is documented in a comment at the top of `admin/assets/js/admin.js` —
+**the plaintext passphrase itself is deliberately never written in that file, or
+anywhere else in this repo.** This repo is public on GitHub, so a comment is not a
+private note — it's a public one. The actual current passphrase was shared with the
+shop owner out of band (WhatsApp) only. If you ever regenerate it, do the same: give
+the new hash to the file, give the new plaintext to the owner directly, never both to
+the repo. **This is still only a client-side speed bump, not authentication** — even
+with the plaintext removed, anyone who can view-source the page can read the hash and
+brute-force a weak passphrase, or simply see that a gate exists. It does not protect
+anything sensitive and must never be treated as real access control. Consequently:
+`admin/index.html` carries `<meta name="robots" content="noindex, nofollow">`,
+`robots.txt` disallows `/admin/`, and the UI itself shows a permanent on-screen warning
+saying not to share the admin link publicly. Don't remove any of those three and don't
+let anyone mistake this gate for real security.
