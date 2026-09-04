@@ -387,6 +387,38 @@ tip under `prefers-reduced-motion`).
       Also now doable from `admin/` (Business Info → YouTube Channel URL + the
       "Show YouTube link" checkbox) once the owner has the channel URL.
 
+- [x] **Page-speed pass** (after go-live, Hostinger's Page Speed tool showed Desktop 94 /
+      Mobile 78). No build step means no minifier/bundler to lean on, so every fix here
+      is plain markup/attribute changes:
+      - **Fonts trimmed + made non-render-blocking.** The Google Fonts request asked for
+        weight 500 on both Nunito Sans and Rubik; grepping `style.css` turned up zero
+        uses of either (body text relies on the browser's implicit 400, unstyled
+        headings fall back to the UA "bold" keyword which resolves to 700, already
+        requested) — dropped both, so it's 6 font files instead of 8. The stylesheet
+        `<link>` itself was also swapped for the standard `media="print"
+        onload="this.media='all'"` trick (+ a `<noscript>` fallback and a
+        `rel="preload" as="style"` so the browser still fetches it early) so it no
+        longer blocks first paint while it downloads.
+      - **Hero photo preloaded + made responsive.** It's the LCP element on this page.
+        Added `<link rel="preload" as="image" fetchpriority="high" imagesrcset=...
+        imagesizes=...>` in `<head>` so the browser starts fetching it before it even
+        reaches the `<body>`, and gave the `<img>` itself a matching `srcset`/`sizes`
+        (480w for the ≤900px stacked-hero layout, 900w above that) — phones no longer
+        download the same 900px-wide source a desktop does. `imagesrcset`/`imagesizes`
+        on the preload tag must stay in sync with the `<img>`'s own `srcset`/`sizes` or
+        the browser can preload the wrong variant and fetch the image twice.
+      - **Fixed a lazy-loading anti-pattern.** The floating kitten photo (`.ph--float`)
+        sits inside the hero, visible immediately on load, but had `loading="lazy"` on
+        it — lazy-loading is for below-the-fold images; on an above-the-fold one it can
+        delay it and is a common Lighthouse flag. Removed.
+      - **Not done, deliberately:** no `srcset` was added to the 6 category cards or 6
+        gallery photos — they already carry `loading="lazy"` and sit below the fold, so
+        they don't affect LCP/the initial critical path the way the hero does; the
+        payoff for the added markup complexity is much smaller there. Revisit once the
+        Unsplash placeholders are replaced with the real, self-hosted shop photos
+        anyway (see "Blocked on the owner" above) — that's the point where `<picture>`/
+        `srcset` sizing should be redone against the real asset dimensions, not before.
+
 ### Possible next steps (not started)
 
 - Product/pricing section if the owner wants prices public

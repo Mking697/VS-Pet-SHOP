@@ -23,14 +23,34 @@
 <meta name="twitter:title" data-field="og-title" content="V S Pet Shop, Greater Noida — Open 24 Hours">
 <meta name="twitter:description" data-field="og-desc" content="Dogs, cats, birds, premium pet food, grooming and accessories. Rated 5.0 on Google. Tech Zone IV, Greater Noida.">
 
+<!-- Preload the hero photo — it's the LCP (Largest Contentful Paint)
+     candidate on this page, so starting its download as early as
+     possible (before the browser even reaches it in the body) matters
+     more for the page-speed score than almost anything else here.
+     imagesrcset/imagesizes must mirror the <img> tag's own srcset/sizes
+     below or the browser may preload the wrong variant and fetch twice. -->
+<link rel="preload" as="image" fetchpriority="high"
+      href="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=900&amp;q=70"
+      imagesrcset="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=480&amp;q=70 480w,
+                   https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=900&amp;q=70 900w"
+      imagesizes="(max-width: 900px) 440px, 620px">
+
 <!-- Icons -->
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="favicon.svg">
 
-<!-- Fonts -->
+<!-- Fonts — trimmed to weights actually used in style.css (checked: no
+     component uses 500 for either family; body text relies on the
+     browser's implicit 400, unstyled headings fall back to the UA
+     "bold" keyword which resolves to 700, already in this set), and
+     loaded non-render-blocking (the print-media-swap trick + noscript
+     fallback) so the page can start painting before the font CSS
+     round-trip finishes. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&amp;family=Rubik:wght@500;600;700;800&amp;display=swap">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap"></noscript>
 
 <link rel="stylesheet" href="assets/css/style.css?v=7">
 
@@ -179,12 +199,15 @@
     <div class="hero__media" data-anim="3">
       <figure class="ph ph--hero">
         <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=900&amp;q=70"
+             srcset="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=480&amp;q=70 480w,
+                     https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=900&amp;q=70 900w"
+             sizes="(max-width: 900px) 440px, 620px"
              alt="A happy golden retriever" width="900" height="1000" fetchpriority="high" decoding="async">
       </figure>
 
       <figure class="ph ph--float">
         <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&amp;fit=crop&amp;w=400&amp;q=70"
-             alt="A playful kitten looking for a loving home" width="400" height="400" loading="lazy" decoding="async">
+             alt="A playful kitten looking for a loving home" width="400" height="400" decoding="async">
       </figure>
 
       <div class="hero__badge">
