@@ -5,13 +5,18 @@
 # ---- Default document ----
 DirectoryIndex index.html
 
-# ---- Force HTTPS + non-www -> www (edit to taste) ----
+# ---- Force HTTPS + non-www canonical (vspetshop.com, no www) ----
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
   # Redirect http -> https
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Redirect www -> non-www (matches the canonical/OG/JSON-LD URLs in index.html,
+  # which all use https://vspetshop.com without www)
+  RewriteCond %{HTTP_HOST} ^www\.vspetshop\.com$ [NC]
+  RewriteRule ^(.*)$ https://vspetshop.com/$1 [L,R=301]
 
   # Remove trailing .html from URLs (/contact instead of /contact.html)
   RewriteCond %{REQUEST_FILENAME}.html -f

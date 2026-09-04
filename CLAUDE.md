@@ -28,6 +28,7 @@ replace it with placeholder or invented data.**
 
 | Field | Value |
 |---|---|
+| Domain | vspetshop.com (registered on GoDaddy, hosted/deployed on Hostinger — see §9) |
 | Name | V S Pet Shop |
 | Address | Shop No. 39, Habitech Panchtatva, near Galaxy Vega, Tech Zone IV, Amrapali Dream Valley, Greater Noida, Uttar Pradesh 201318 |
 | Phone / WhatsApp | +91 88512 03070 (`918851203070`) |
@@ -43,8 +44,9 @@ replace it with placeholder or invented data.**
 
 ### Still unknown / needs the owner
 
-- **Domain name** — `www.vspetshop.in` is a guess used in canonical, OG and sitemap URLs.
-  Must be corrected before launch.
+- ~~**Domain name**~~ — resolved: `vspetshop.com`. Canonical link, OG tags, JSON-LD
+  `url`/`image`, `robots.txt`, and `sitemap.xml` all point there now (no `www`,
+  redirected to non-www at the `.htaccess` level — see §9).
 - **YouTube channel URL.**
 - Whether they want prices shown anywhere.
 
@@ -477,3 +479,18 @@ anything sensitive and must never be treated as real access control. Consequentl
 `robots.txt` disallows `/admin/`, and the UI itself shows a permanent on-screen warning
 saying not to share the admin link publicly. Don't remove any of those three and don't
 let anyone mistake this gate for real security.
+
+**Domain & hosting.** The live domain is `vspetshop.com` (registered on GoDaddy, no
+`www`) — this is a *different* company from the host, so DNS has to point from one to
+the other; there's nothing to "connect" inside a single dashboard. Hostinger's Git
+integration is connected to this GitHub repo (`Mking697/VS-Pet-SHOP`, branch `main`) and
+deploys pushed commits into the site's document root — so `git push` is effectively the
+publish step for everything except the DNS pointing itself, which is a one-time GoDaddy
+change (nameservers to Hostinger's, or an A record to Hostinger's IP — done outside git
+entirely, in each provider's own dashboard). `.htaccess` forces HTTPS and redirects
+`www.vspetshop.com` → `vspetshop.com` to match the non-www canonical URL used
+everywhere in `index.html`/`robots.txt`/`sitemap.xml`. Because the whole repo deploys
+as-is (see the `.htaccess` file-map entry in §3), `CLAUDE.md`/`README.md`/`.gitignore`
+are denied at the web-server level even though they physically sit in the deployed
+folder — see the passphrase-gate paragraph above for the same reasoning applied to why
+`admin/` stays gated instead of just "not uploaded."
