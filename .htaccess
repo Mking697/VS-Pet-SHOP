@@ -5,6 +5,15 @@
 # ---- Default document ----
 DirectoryIndex index.html
 
+# ---- Always declare UTF-8 in the HTTP response header ----
+# Every page already has <meta charset="UTF-8"> and modern browsers fall back
+# to it correctly when the header omits a charset, so this wasn't visibly
+# broken for real visitors — but the live server was sending a bare
+# "Content-Type: text/html" with no charset at all, which is technically
+# wrong and can trip up stricter tools (crawlers, link-preview scrapers)
+# that don't do the same HTML5 meta-sniffing fallback a browser does.
+AddDefaultCharset UTF-8
+
 # ---- Force HTTPS + non-www canonical (vspetshop.com, no www) ----
 <IfModule mod_rewrite.c>
   RewriteEngine On
