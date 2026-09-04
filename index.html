@@ -52,7 +52,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap"></noscript>
 
-<link rel="stylesheet" href="assets/css/style.css?v=8">
+<link rel="stylesheet" href="assets/css/style.css?v=9">
 
 <!-- Local business structured data (SEO) -->
 <script type="application/ld+json">
@@ -159,8 +159,18 @@
       <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><svg class="ic"><use href="#i-menu"/></svg></button>
     </div>
   </div>
+
+  <!-- The nav scrim MUST stay inside <header>, as a sibling of .nav above.
+       .header is position:sticky, which always creates a stacking context
+       (even at z-index:auto), so .nav's z-index:--z-nav (120) resolves INSIDE
+       that context, not against the root. While this scrim was a child of
+       <body> it sat in the root context at --z-scrim (110), i.e. above the
+       whole header context (100) INCLUDING the drawer nested in it — it
+       dimmed the drawer and swallowed every tap on the nav links. As a
+       sibling of .nav the documented ladder (scrim 110 < nav 120 < fab 130)
+       resolves exactly as intended. See CSS §7. -->
+  <div class="nav__scrim" id="navScrim" hidden></div>
 </header>
-<div class="nav__scrim" id="navScrim" hidden></div>
 
 <main id="main">
 
@@ -1066,6 +1076,6 @@
   </div>
 </div>
 
-<script src="assets/js/main.js?v=6" defer></script>
+<script src="assets/js/main.js?v=7" defer></script>
 </body>
 </html>

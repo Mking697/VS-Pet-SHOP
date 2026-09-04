@@ -79,13 +79,16 @@
 *,*::before,*::after{ box-sizing:border-box; }
 html{
   -webkit-text-size-adjust:100%; scroll-behavior:smooth; scroll-padding-top:calc(var(--header-h) + 16px);
-  /* `overflow-x:hidden` on body alone (below) does NOT clip position:fixed
-     descendants — fixed elements are positioned against the viewport/root,
-     not against body's box, so an off-canvas fixed element (e.g. the mobile
-     nav drawer parked past the right edge via transform:translateX(105%)
-     when closed, §22) still inflates document.documentElement.scrollWidth
-     unless the root itself also clips horizontal overflow. Mirrors body's
-     rule below so both the in-flow and fixed-position cases are covered. */
+  /* This is the ONLY place horizontal overflow may be clipped — see the note
+     on `body` below for why putting it there too actively breaks sticky.
+     It has to be here rather than on body because `overflow-x:hidden` on body
+     does NOT clip position:fixed descendants: fixed elements are positioned
+     against the viewport/root, not against body's box, so an off-canvas fixed
+     element (e.g. the mobile nav drawer parked past the right edge via
+     transform:translateX(105%) when closed, §22) still inflates
+     document.documentElement.scrollWidth unless the ROOT clips it. That
+     inflation is what once stretched the mobile layout viewport to ~1600px
+     and left the page rendering in a narrow column. */
   overflow-x:hidden;
 }
 
@@ -103,7 +106,17 @@ body{
   font-size:17px;
   line-height:1.65;
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  /* NO `overflow-x:hidden` here — it must live on `html` only (see §2 above).
+     The viewport takes its overflow from the root element; body's overflow is
+     propagated to the viewport ONLY while the root computes to `visible`.
+     Once `html` got `overflow-x:hidden`, body's copy stopped being propagated
+     and instead made BODY ITSELF a scroll container (a hidden/visible pair
+     forces the visible axis to `auto`). `position:sticky` resolves against the
+     nearest scrollport — so `.header` (§7) and `.stats` (§12) would stick
+     inside body's content-sized, never-scrolling box, i.e. never stick at all.
+     The rule on `html` already clips horizontal overflow at the viewport for
+     both in-flow and fixed-position content, so this one was redundant as well
+     as harmful. Do not re-add it. */
 }
 
 h1,h2,h3,h4{
@@ -264,13 +277,35 @@ iframe{ border:0; display:block; }
 /* ---------- 7. HEADER / NAV ---------- */
 .header{
   position:sticky; top:0; z-index:var(--z-header);
+  background:transparent;
+  border-bottom:1px solid transparent;
+  transition:box-shadow var(--t-base) ease, border-color var(--t-base) ease;
+}
+/* The frosted-glass bar lives on this pseudo-element and NOT on .header itself.
+   `backdrop-filter` makes an element a CONTAINING BLOCK for its position:fixed
+   descendants (exactly like transform / filter / will-change do). The mobile nav
+   drawer `.nav` (§22: position:fixed; inset:0 0 0 auto) is a DOM child of
+   .header, so while the blur sat on .header the drawer was anchored to the 75px
+   header bar instead of the viewport — it rendered as a ~340x110 stub hanging in
+   the header, not a full-height off-canvas panel. Painting the identical
+   background + blur on ::before instead keeps the visual byte-for-byte while
+   leaving .header free of a containing block, so .nav (and the scrim beside it)
+   anchor to the viewport again.
+   DO NOT move `backdrop-filter` back onto .header.
+   `inset:0 0 -1px` deliberately overhangs the 1px bottom border so the frosted
+   surface still covers it while it is transparent (unstuck state) — otherwise a
+   1px unblurred seam shows along the bottom edge.
+   `z-index:-1` is safe here: .header is position:sticky, which always creates a
+   stacking context, so the pseudo can never fall behind the page — only behind
+   .header's own in-flow content (logo / nav / actions). */
+.header::before{
+  content:''; position:absolute; inset:0 0 -1px; z-index:-1;
   background:rgba(255,247,237,.86);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid transparent;
-  transition:box-shadow var(--t-base) ease, border-color var(--t-base) ease, background-color var(--t-base) ease;
+  transition:background-color var(--t-base) ease;
 }
+.header.is-stuck::before{ background:rgba(255,247,237,.96); }
 .header.is-stuck{
-  background:rgba(255,247,237,.96);
   border-bottom-color:var(--line);
   box-shadow:0 10px 30px -22px rgba(120,53,15,.5);
 }
@@ -310,6 +345,10 @@ iframe{ border:0; display:block; }
   display:none; width:46px; height:46px; place-items:center;
   border-radius:14px; background:#fff; box-shadow:var(--sh-sm); font-size:22px;
 }
+/* #navScrim is a child of <header>, deliberately — it is a sibling of .nav so
+   that both resolve in the SAME stacking context (see the note in index.html).
+   Moving it back out to <body> re-breaks the mobile drawer: the scrim would
+   then out-paint the entire header context and cover the drawer nested in it. */
 .nav__scrim{
   position:fixed; inset:0; z-index:var(--z-scrim);
   background:rgba(36,22,8,.55); backdrop-filter:blur(3px);

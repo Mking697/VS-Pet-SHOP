@@ -526,3 +526,81 @@ as-is (see the `.htaccess` file-map entry in §3), `CLAUDE.md`/`README.md`/`.git
 are denied at the web-server level even though they physically sit in the deployed
 folder — see the passphrase-gate paragraph above for the same reasoning applied to why
 `admin/` stays gated instead of just "not uploaded."
+
+---
+
+## 10. Audit round (Sep 2026) — bugs found once the site was finally looked at
+
+Until this round every "verification" on this project was code-level: `node --check`,
+grep, `curl` status codes. **Nothing had ever been opened in a browser.** A human
+looking at it on a phone found two broken layouts in minutes. A Playwright pass and
+three read-only audits (accessibility, SEO, code review) then found a lot more. The
+lesson worth carrying forward: *for anything visual, code-level checks prove nothing.*
+
+### The CSS containment/stacking traps — four of them, same family
+
+These are the ones most likely to be re-introduced, so they're documented in full at
+their site in `style.css`. Do not undo any of them:
+
+1. **`overflow-x:hidden` belongs on `html` ONLY, never also on `body`** (§2). The
+   viewport takes its overflow from the root; body's is propagated *only* while the
+   root computes to `visible`. With both set, body becomes a scroll container and
+   `position:sticky` (`.header` §7, `.stats` §12) silently stops working — measured:
+   header top at scroll 1200 was `-1159` (scrolled away) with both, `0` (pinned) with
+   only `html`. It needs to be on `html` rather than `body` because body's version does
+   not clip `position:fixed` descendants, which is what inflated the mobile layout
+   viewport to ~1600px and squeezed the whole page into a narrow column.
+2. **`.rev` needs `overflow:hidden`** (§14), like its sibling `.ribbon` (§10) — both
+   wrap a `width:max-content` marquee track that otherwise escapes.
+3. **`backdrop-filter` must not sit on `.header`** (§7) — it makes the element a
+   *containing block for `position:fixed` descendants*, so the nav drawer anchored to
+   the 75px header bar and rendered as a 340×110 stub instead of a full-height panel.
+   The glass lives on `.header::before` now; pixel-diffed at 0 differing pixels.
+4. **`#navScrim` must stay inside `<header>`**, as a sibling of `.nav`. `position:sticky`
+   always creates a stacking context, so `.nav`'s z-index resolves *inside* the header;
+   a body-level scrim out-painted the whole header context and swallowed every tap
+   (`elementFromPoint` at all 9 drawer controls returned the scrim).
+
+**Assertion note:** `documentElement.scrollWidth === innerWidth` is no longer a valid
+"no horizontal overflow" check now that clipping happens at the root — `scrollWidth`
+reports unclipped extent. Assert `clientWidth === innerWidth` instead.
+
+### Admin-panel bugs — it was corrupting content on every save
+
+The panel edits the owner's real site content, so these mattered more than they look.
+All fixed, all documented inline:
+
+- The 6 category **Button Text** fields used `kind:'smart'` (icon-first helper) on
+  text-first markup, so they read empty and appended after the arrow — every save,
+  even one with no edits, turned "Enquire" into "Enquire →Enquire Now".
+- **`SHOP_NAME`** was injected into `main.js` unescaped. An apostrophe ("Vinny's Pet
+  Shop") wrote a syntax error, killing the whole IIFE — and since `.reveal` starts at
+  `opacity:0` and only JS adds `.is-in`, **most of the page would render blank**.
+- **Gallery `alt` text** was overwritten with the caption on save, destroying all six
+  intentionally-different alts irrecoverably.
+- **JSON-LD** was written via `JSON.stringify` without escaping `<`, so a pasted URL
+  containing `</script>` would close the block and inject live HTML.
+- **`OLD_DOMAIN` was a hardcoded constant** still pointing at the old placeholder
+  domain, so after the move to vspetshop.com the Domain field matched nothing and
+  became a silent no-op. It now reads the origin domain off the loaded document
+  (`state.site.origDomain`) and can never go stale again.
+
+### Accessibility — the form was a keyboard trap
+
+`validate()` called `first.focus()` and was wired to `blur`, so a half-typed phone
+number yanked focus straight back: you could not Tab or click out of the field
+(WCAG 2.1.2). It also validated *both* fields on either blur, flagging a field the
+user hadn't reached. Split into `validate(form, moveFocus)` (focus only on submit)
+and a single-field `validateField()` for blur.
+
+### Still open — see the audit findings, not yet fixed
+
+Accessibility: form errors are not announced (no `aria-describedby`/`role="alert"`);
+the closed mobile drawer keeps 9 links in the tab order (`visibility:hidden` fixes it);
+`aria-live` on the tip strip interrupts screen readers every 5.5s; no pause control for
+the marquees (WCAG 2.2.2); ~10 colour-contrast failures; 151 icon SVGs unmarked
+`aria-hidden`. SEO: **this domain has prior history as an affiliate store and those URLs
+are still indexed** — serve `410` for `/product/`, `/brand/`, `/wp-*`; `og-cover.jpg`
+still 404s (breaks link previews *and* the JSON-LD `image`); the title truncates before
+"Open 24 Hours"; the gallery still calls stock photos "actual photos from our store",
+which is a §6 content-integrity problem.

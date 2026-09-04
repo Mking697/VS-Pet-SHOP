@@ -226,7 +226,12 @@
     input.setAttribute('aria-invalid', message ? 'true' : 'false');
   }
 
-  function validate(form) {
+  /* `moveFocus` is opt-in, and is only ever passed from the submit handler.
+     It must NOT be set from the blur handlers below: focusing the first
+     invalid field from a blur handler yanks focus straight back into the
+     field the user was trying to leave, so you cannot Tab (or click) out of
+     a half-typed phone number — a keyboard trap, WCAG 2.1.2. */
+  function validate(form, moveFocus) {
     var name  = form.elements.name;
     var phone = form.elements.phone;
     var ok    = true;
@@ -247,8 +252,22 @@
       setError(phone, '');
     }
 
-    if (first) first.focus();
+    if (moveFocus && first) first.focus();
     return ok;
+  }
+
+  /* Validates ONE field in isolation, for the blur handlers. Running the
+     whole-form validate() on blur had a second bug beyond the focus trap:
+     leaving Name empty and filling Phone correctly would flag Name, i.e.
+     report an error about a field the user hadn't filled in yet. */
+  function validateField(input) {
+    if (input.name === 'name') {
+      setError(input, input.value.trim().length < 2 ? 'Please enter your name.' : '');
+    } else if (input.name === 'phone') {
+      var digits = input.value.replace(/\D/g, '');
+      setError(input, (digits.length < 10 || digits.length > 13)
+        ? 'Please enter a valid phone number.' : '');
+    }
   }
 
   if (form) {
@@ -257,14 +276,14 @@
       var input = form.elements[n];
       if (input) {
         input.addEventListener('blur', function () {
-          if (input.value.trim()) validate(form);
+          if (input.value.trim()) validateField(input);
         });
       }
     });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!validate(form)) return;
+      if (!validate(form, true)) return;
 
       var name  = form.elements.name.value.trim();
       var phone = form.elements.phone.value.trim();

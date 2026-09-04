@@ -55,7 +55,15 @@
   'use strict';
 
   var ADMIN_PASS_HASH = 'f394908a5828a85a81f31dedc46326257e715bb56a27bc967430000e19f7be07'; // sha256 of the current passphrase — see comment block above, never write the plaintext here
-  var OLD_DOMAIN = 'https://www.vspetshop.in';
+  /* Fallback only, for the rare case where the loaded index.html has no
+     usable <link rel="canonical">. The domain actually used for the
+     search-and-replace is state.site.origDomain, read from the loaded
+     document in initEditor(). It MUST NOT be a hardcoded constant: this was
+     pinned to the old placeholder domain, so after the site moved to
+     vspetshop.com the string matched nothing and the Domain field became a
+     silent no-op — the preview showed no change and the downloaded file kept
+     the old URLs, with no error. */
+  var DEFAULT_DOMAIN = 'https://vspetshop.com';
 
   var $  = (s, c) => (c || document).querySelector(s);
   var $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
@@ -147,7 +155,7 @@
       ratingValue: '', reviewCount: '',
       mapSrc: ''
     },
-    site: { domain: OLD_DOMAIN, shopName: 'VS Pet Shop', robotsIndexable: true },
+    site: { domain: DEFAULT_DOMAIN, origDomain: DEFAULT_DOMAIN, shopName: 'VS Pet Shop', robotsIndexable: true },
     origMainJs: { whatsapp: '', shopName: '' },
     reviews: [],   // { id, row, quote, name, meta }
     faqs: [],      // { id, q, a }
@@ -195,7 +203,11 @@
   for (let n = 1; n <= 6; n++) {
     addField({ key: `cat-${n}-title`, label: `Title`, input: 'text', kind: 'simple', group: 'cat', n });
     addField({ key: `cat-${n}-desc`, label: `Description`, input: 'textarea', kind: 'simple', group: 'cat', n });
-    addField({ key: `cat-${n}-cta`, label: `Button Text`, input: 'text', kind: 'smart', group: 'cat', n });
+    /* 'leading', NOT 'smart'. These buttons are "Enquire <svg/>" — text FIRST,
+       icon last — so getTrailingText/setTrailingText (which assume icon-first)
+       read '' and appended the new label AFTER the arrow, producing
+       "Enquire →Enquire Now" on every save, even a save with no edits. */
+    addField({ key: `cat-${n}-cta`, label: `Button Text`, input: 'text', kind: 'leading', group: 'cat', n });
     addField({ key: `cat-${n}-img-src`, label: `Image URL`, input: 'text', kind: 'attr', attr: 'src', group: 'cat', n });
     addField({ key: `cat-${n}-img-alt`, label: `Image Alt Text`, input: 'text', kind: 'attr', attr: 'alt', group: 'cat', n });
   }
@@ -252,8 +264,12 @@
         case 'gallery-caption': {
           el.setAttribute('data-caption', value);
           el.setAttribute('aria-label', 'Open photo: ' + value);
-          const img = el.querySelector('img');
-          if (img) img.alt = value;
+          /* Deliberately does NOT touch img.alt. The alts are intentionally
+             different from the captions (alt describes the image, the caption
+             adds context), and overwriting alt with the caption destroyed all
+             six of them on the owner's first save — irrecoverably, through a
+             tool that gives no warning. The caption already reaches assistive
+             tech via the button's aria-label set just above. */
           break;
         }
       }
@@ -385,7 +401,11 @@
     if (b.ytShow && b.yt.trim()) sameAs.push(b.yt.trim());
     if (sameAs.length) ld.sameAs = sameAs;
 
-    script.textContent = '\n' + JSON.stringify(ld, null, 2) + '\n';
+    /* Escape `<` as <. JSON.stringify does not escape it, and script
+       content is serialised raw — so a URL containing "</script>" pasted into
+       any social field would close the JSON-LD block early and turn the rest
+       of the line into live HTML on the published page. */
+    script.textContent = '\n' + JSON.stringify(ld, null, 2).replace(/</g, '\\u003c') + '\n';
   }
 
   /* ---------------------------------------------------------
@@ -579,8 +599,8 @@
   function buildDocument() {
     let text = state.rawIndexHtml;
     const newDomain = normDomain();
-    if (newDomain && newDomain !== OLD_DOMAIN) {
-      text = text.split(OLD_DOMAIN).join(newDomain);
+    if (newDomain && newDomain !== state.site.origDomain) {
+      text = text.split(state.site.origDomain).join(newDomain);
     }
     const doc = new DOMParser().parseFromString(text, 'text/html');
 
@@ -727,7 +747,7 @@
     /* ---- Site Settings ---- */
     {
       const { section, body } = makeSection('Site Settings', true);
-      body.appendChild(businessField('Domain', `Current: ${OLD_DOMAIN}. Change this only once you have the real domain — it replaces every occurrence across canonical link, Open Graph tags and structured data (and robots.txt / sitemap.xml / 404.html if you loaded them).`,
+      body.appendChild(businessField('Domain', `Current: ${state.site.origDomain}. Change this only once you have the real domain — it replaces every occurrence across canonical link, Open Graph tags and structured data (and robots.txt / sitemap.xml / 404.html if you loaded them).`,
         () => state.site.domain, v => { state.site.domain = v; }));
       body.appendChild(businessField('Shop Name (used in the WhatsApp message main.js builds)', 'Only regenerates main.js if changed, and only if you loaded main.js above.',
         () => state.site.shopName, v => { state.site.shopName = v; }));
@@ -1074,7 +1094,13 @@
     readCatalogsFromDoc(initialDoc);
 
     const canonical = initialDoc.querySelector('link[rel="canonical"]');
-    state.site.domain = canonical ? canonical.getAttribute('href').replace(/\/$/, '') : OLD_DOMAIN;
+    /* Read the domain the loaded file actually uses, and remember it as the
+       search term for the replace. Guarded: a <link rel="canonical"> with no
+       href would otherwise throw here and abort initEditor(), leaving the
+       editor blank with no error shown. */
+    var canonicalHref = canonical && canonical.getAttribute('href');
+    state.site.domain = canonicalHref ? canonicalHref.replace(/\/$/, '') : DEFAULT_DOMAIN;
+    state.site.origDomain = state.site.domain;
 
     const robotsEl = initialDoc.querySelector('[data-field~="meta-robots"]');
     state.site.robotsIndexable = !robotsEl || !/noindex/i.test(robotsEl.getAttribute('content') || '');
@@ -1125,7 +1151,14 @@
       if (nameChanged || waChanged) {
         let js = state.rawMainJs;
         js = js.replace(/(var\s+WHATSAPP_NUMBER\s*=\s*')[^']*(')/, `$1${newWa}$2`);
-        js = js.replace(/(var\s+SHOP_NAME\s*=\s*')[^']*(')/, `$1${state.site.shopName.trim()}$2`);
+        /* Escape before injecting into a single-quoted JS string literal, and
+           use a replacer FUNCTION so $&, $` and $' in the name aren't treated
+           as replacement patterns. An unescaped apostrophe here ("Vinny's Pet
+           Shop") would write a syntax error into main.js, killing the whole
+           IIFE — and since .reveal starts at opacity:0 and only JS adds
+           .is-in, most of the page would render blank. */
+        const safeName = state.site.shopName.trim().replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        js = js.replace(/(var\s+SHOP_NAME\s*=\s*')[^']*(')/, (m, a, b) => a + safeName + b);
         download('main.js', js, 'text/javascript;charset=utf-8');
         downloaded.push('assets/js/main.js');
       }
@@ -1133,11 +1166,11 @@
 
     // robots.txt / sitemap.xml / 404.html — only if domain changed AND they were uploaded
     const newDomain = normDomain();
-    const domainChanged = newDomain && newDomain !== OLD_DOMAIN;
+    const domainChanged = newDomain && newDomain !== state.site.origDomain;
     if (domainChanged) {
-      if (state.rawRobots) { download('robots.txt', state.rawRobots.split(OLD_DOMAIN).join(newDomain), 'text/plain;charset=utf-8'); downloaded.push('robots.txt'); }
-      if (state.rawSitemap) { download('sitemap.xml', state.rawSitemap.split(OLD_DOMAIN).join(newDomain), 'application/xml;charset=utf-8'); downloaded.push('sitemap.xml'); }
-      if (state.raw404) { download('404.html', state.raw404.split(OLD_DOMAIN).join(newDomain), 'text/html;charset=utf-8'); downloaded.push('404.html'); }
+      if (state.rawRobots) { download('robots.txt', state.rawRobots.split(state.site.origDomain).join(newDomain), 'text/plain;charset=utf-8'); downloaded.push('robots.txt'); }
+      if (state.rawSitemap) { download('sitemap.xml', state.rawSitemap.split(state.site.origDomain).join(newDomain), 'application/xml;charset=utf-8'); downloaded.push('sitemap.xml'); }
+      if (state.raw404) { download('404.html', state.raw404.split(state.site.origDomain).join(newDomain), 'text/html;charset=utf-8'); downloaded.push('404.html'); }
     }
 
     const dl = $('#admDownloads');
