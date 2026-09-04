@@ -46,11 +46,17 @@ AddDefaultCharset UTF-8
   ExpiresByType text/html                 "access plus 0 seconds"
   ExpiresByType text/css                  "access plus 1 year"
   ExpiresByType application/javascript    "access plus 1 year"
+  # Hostinger actually serves .js as application/x-javascript, so the rule
+  # above never matched and main.js fell back to a 7-day platform default.
+  # Verified live: Content-Type: application/x-javascript, max-age=604800.
+  # Safe to cache for a year because every asset URL carries ?v=N (see §7).
+  ExpiresByType application/x-javascript  "access plus 1 year"
   ExpiresByType image/svg+xml             "access plus 1 year"
   ExpiresByType image/webp                "access plus 1 year"
   ExpiresByType image/jpeg                "access plus 1 year"
   ExpiresByType image/png                 "access plus 1 year"
   ExpiresByType font/woff2                "access plus 1 year"
+  ExpiresByType application/font-woff2    "access plus 1 year"
 </IfModule>
 
 # ---- Security headers ----
@@ -77,3 +83,10 @@ AddDefaultCharset UTF-8
 
 # ---- Custom 404 ----
 ErrorDocument 404 /404.html
+
+# ---- Fonts are self-hosted (see CSS §0) ----
+# Make sure the woff2 MIME type is correct regardless of server defaults;
+# a wrong type makes some browsers refuse the font and silently fall back.
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+</IfModule>

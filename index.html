@@ -39,20 +39,18 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="favicon.svg">
 
-<!-- Fonts — trimmed to weights actually used in style.css (checked: no
-     component uses 500 for either family; body text relies on the
-     browser's implicit 400, unstyled headings fall back to the UA
-     "bold" keyword which resolves to 700, already in this set), and
-     loaded non-render-blocking (the print-media-swap trick + noscript
-     fallback) so the page can start painting before the font CSS
-     round-trip finishes. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&amp;family=Rubik:wght@600;700;800&amp;display=swap"></noscript>
+<!-- Fonts — self-hosted (see CSS §0). Previously loaded from Google Fonts
+     with the media="print"/onload swap, which applied the font stylesheet
+     after first paint and reflowed every line of text at once: measured
+     CLS 0.38 and Lighthouse mobile 68 under conditions matching Hostinger's
+     own test vantage point. Self-hosted + preloaded: CLS 0.00, 89.
+     Two variable woff2 files, 65KB total, no third-party origins.
+     `crossorigin` is REQUIRED on a font preload even same-origin — without
+     it the browser fetches the file a second time. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/nunito-sans-var-latin.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/rubik-var-latin.woff2">
 
-<link rel="stylesheet" href="assets/css/style.css?v=9">
+<link rel="stylesheet" href="assets/css/style.css?v=10">
 
 <!-- Local business structured data (SEO) -->
 <script type="application/ld+json">

@@ -604,3 +604,42 @@ are still indexed** — serve `410` for `/product/`, `/brand/`, `/wp-*`; `og-cov
 still 404s (breaks link previews *and* the JSON-LD `image`); the title truncates before
 "Open 24 Hours"; the gallery still calls stock photos "actual photos from our store",
 which is a §6 content-integrity problem.
+
+### Performance round — what actually moved the needle
+
+Measured on production with Playwright + CDP (Moto G Power, 4G throttle, 4× CPU,
+medians of 5). Two caveats that cost the auditor time and will cost you the same:
+**Hostinger's CDN serves a JS bot-challenge to Lighthouse** (403 `ERRORED_DOCUMENT_REQUEST`),
+so Lighthouse cannot run against the live URL — test a local copy. And the PageSpeed
+Insights API quota is easy to exhaust.
+
+- **The hero fade was gating LCP, not the image** (fixed, §21). Chrome will not accept
+  an LCP candidate while it is `opacity:0`, and `.hero__media` carried `data-anim="3"`
+  = 300ms delay + 700ms fade. On production the hero image finished downloading at
+  **1042ms** while LCP fired at **2824ms**. A/B, 5 runs each, identical bytes:
+  **LCP 3452ms → 1888ms, −1564ms**, collapsing onto FCP. One CSS rule.
+- **Fonts are now self-hosted** (§0). The `media="print"/onload` swap applies the font
+  stylesheet after first paint and reflows all text at once. It is invisible on a slow
+  connection but inverts when first-party CSS is fast — which is exactly Hostinger's
+  own vantage point, and the likely explanation for their 78. Harness reproducing that
+  condition: **CLS 0.38 / score 68** as-was, **CLS 0.00 / score 89** self-hosted.
+- **`main.js` was being cached for 7 days, not a year** (fixed, `.htaccess`). Hostinger
+  serves `.js` as `application/x-javascript`, which the existing
+  `ExpiresByType application/javascript` rule never matched.
+
+**Do not** do these — measured and rejected: `preconnect` to images.unsplash.com (≈0ms,
+the hero `rel=preload` already opens that connection); minifying CSS/JS (<1 point, and
+it costs the readability the no-build constraint depends on); converting images to WebP
+(**Unsplash already serves AVIF** via `auto=format` — WebP would be *larger*).
+
+**Correction to an earlier claim in this file:** the hero's `480w` srcset candidate is
+dead on real phones. `sizes="(max-width:900px) 440px"` × DPR 2.625 = 1155px, so the
+browser always picks `900w`. The note that "phones no longer download the same 900px
+source a desktop does" was wrong. Current behaviour is still correct (900w is right for
+a 370px box at DPR 2.6); when real photos land, re-derive `sizes` from the true render
+box of **370px**, not 440px.
+
+**Images are not the bottleneck.** Replacing the Unsplash placeholders is worth roughly
+**0–2 points** — do it for trust/SEO/content-integrity reasons (see §6 and the open SEO
+items above), not for speed. The Google Maps iframe is 465KB but correctly lazy-loaded
+and costs **0 points**; facading it is a mobile-data kindness, not a perf fix.
