@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
+
+# /admin/ is deliberately NOT disallowed here. robots.txt is public, so a
+# Disallow line advertises the admin panel's existence — and it would also
+# stop Google crawling the page, which is the only way it can see the
+# noindex directive. /admin/ is kept out of the index by an X-Robots-Tag
+# header (admin/.htaccess) plus a noindex meta tag. Do not re-add it.
 
 Sitemap: https://vspetshop.com/sitemap.xml

@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#F97316">
 
-<title data-field="meta-title">V S Pet Shop, Greater Noida — Dogs, Cats, Birds, Pet Food &amp; Grooming | Open 24 Hours</title>
-<meta name="description" data-field="meta-desc" content="V S Pet Shop, Tech Zone IV, Greater Noida — dogs, cats, birds, premium pet food, grooming and accessories. Rated 5.0 on Google. Open 24 hours. Call or WhatsApp 8851203070.">
+<!-- Title kept under ~60 chars so Google doesn't truncate it. The old 84-char
+     version cut off at "…Pet Food &amp; Groo…", so "Open 24 Hours" — the one thing
+     that separates this shop from the competitor 300m away in Tech Zone IV —
+     never appeared in results at all. Local term leads; brand trails, because
+     nobody is searching the brand yet (18 reviews, no citations). -->
+<title data-field="meta-title">Pet Shop in Greater Noida — Open 24 Hours | V S Pet Shop</title>
+<meta name="description" data-field="meta-desc" content="Pet shop in Tech Zone IV, Greater Noida. Dogs, cats, birds, pet food, grooming and home delivery. Open 24 hours, 7 days. Call 88512 03070.">
 <meta name="keywords" data-field="meta-keywords" content="pet shop Greater Noida, pet store Tech Zone 4, dog shop Greater Noida, cat shop, bird shop, pet food Greater Noida, pet grooming Greater Noida, Amrapali Dream Valley pet shop, V S Pet Shop">
 <meta name="robots" data-field="meta-robots" content="index, follow">
 <link rel="canonical" href="https://vspetshop.com/">
@@ -18,7 +23,17 @@
 <meta property="og:title" data-field="og-title" content="V S Pet Shop, Greater Noida — Open 24 Hours">
 <meta property="og:description" data-field="og-desc" content="Dogs, cats, birds, premium pet food, grooming and accessories. Rated 5.0 on Google. Tech Zone IV, Greater Noida.">
 <meta property="og:url" content="https://vspetshop.com/">
-<meta property="og:image" content="https://vspetshop.com/assets/img/og-cover.jpg">
+<!-- INTERIM. assets/img/og-cover.jpg does not exist and returned 404, so every
+     WhatsApp/Facebook share of this link rendered with no image at all — a
+     direct conversion loss for a shop whose main channel is WhatsApp. This
+     points at the hero photo cropped to 1200x630 so previews work today.
+     It is deliberately the dog photo, not a storefront shot: it reads as
+     brand imagery rather than asserting "this is our premises", which a stock
+     storefront would (see CLAUDE.md §6). REPLACE with a real 1200x630 photo
+     from the owner's GMB listing as soon as one exists, and drop this note. -->
+<meta property="og:image" content="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=80">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" data-field="og-title" content="V S Pet Shop, Greater Noida — Open 24 Hours">
 <meta name="twitter:description" data-field="og-desc" content="Dogs, cats, birds, premium pet food, grooming and accessories. Rated 5.0 on Google. Tech Zone IV, Greater Noida.">
@@ -50,20 +65,27 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/nunito-sans-var-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/rubik-var-latin.woff2">
 
-<link rel="stylesheet" href="assets/css/style.css?v=10">
+<link rel="stylesheet" href="assets/css/style.css?v=11">
 
 <!-- Local business structured data (SEO) -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "PetStore",
+  "@id": "https://vspetshop.com/#petstore",
   "name": "V S Pet Shop",
   "description": "Pet shop in Greater Noida offering dogs, cats and birds, premium pet food, grooming services, essentials and accessories. Open 24 hours.",
   "url": "https://vspetshop.com/",
-  "telephone": "+91-88512-03070",
+  "telephone": "+918851203070",
   "email": "vspetshop2007@gmail.com",
   "priceRange": "₹₹",
-  "image": "https://vspetshop.com/assets/img/og-cover.jpg",
+  "currenciesAccepted": "INR",
+  "paymentAccepted": "Cash, UPI, Credit Card, Debit Card",
+  "areaServed": {
+    "@type": "City",
+    "name": "Greater Noida"
+  },
+  "image": "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&h=630&q=80",
   "hasMap": "https://share.google/t2MvFYX8s03WqXF8s",
   "address": {
     "@type": "PostalAddress",
@@ -703,9 +725,17 @@
   <div class="container">
     <header class="s-head s-head--row reveal">
       <div>
-        <p class="pill"><svg class="ic"><use href="#i-camera"/></svg> Real photos</p>
-        <h2 class="s-title">See <span class="u-brand">VS Pet Shop</span> in Real Life</h2>
-        <p class="s-sub">Actual photos from our store and the pets who found their families here.</p>
+        <!-- These are still Unsplash placeholders (CLAUDE.md "Blocked on the
+             owner"), so this copy must NOT claim they are photos of this shop.
+             It previously read "Real photos" / "Actual photos from our store",
+             with a caption naming Tech Zone IV — a specific, checkable claim
+             about a real premises attached to a stock photo of somewhere else.
+             That is exactly the §6 content-integrity problem that got
+             "5,000+ happy families" removed. Restore the stronger wording only
+             once the owner's own photos are actually in assets/img/. -->
+        <p class="pill"><svg class="ic"><use href="#i-camera"/></svg> Have a look around</p>
+        <h2 class="s-title">What You'll Find at <span class="u-brand">VS Pet Shop</span></h2>
+        <p class="s-sub">The kind of pets, food, grooming and accessories we stock.</p>
       </div>
       <a class="btn btn--ghost" href="#contact">Visit the Store <svg class="ic"><use href="#i-arrow"/></svg></a>
     </header>
@@ -713,8 +743,8 @@
     <div class="gal reveal" data-stagger>
       <button class="gal__item gal__item--wide ph" data-lightbox
         data-src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&amp;fit=crop&amp;w=1400&amp;q=80"
-        data-caption="Our storefront in Tech Zone IV, Greater Noida" aria-label="Open photo: our storefront" data-field="gal-1-caption gal-1-src-full">
-        <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&amp;fit=crop&amp;w=700&amp;q=70" alt="VS Pet Shop storefront" width="700" height="500" loading="lazy" decoding="async" data-field="gal-1-src-thumb">
+        data-caption="A well-stocked pet shop interior" aria-label="Open photo: pet shop interior" data-field="gal-1-caption gal-1-src-full">
+        <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&amp;fit=crop&amp;w=700&amp;q=70" alt="Pet shop interior with stocked shelves" width="700" height="500" loading="lazy" decoding="async" data-field="gal-1-src-thumb">
         <span class="gal__zoom"><svg class="ic"><use href="#i-camera"/></svg></span>
       </button>
 
@@ -825,7 +855,12 @@
   <div class="container">
     <div class="tip-strip__card" id="tipStrip" tabindex="0">
       <span class="tip-strip__ic"><svg class="ic"><use href="#i-paw"/></svg></span>
-      <p class="tip-strip__text" id="tipStripText" aria-live="polite">A dog's sense of smell is tens of thousands of times stronger than a human's.</p>
+      <!-- No aria-live here, deliberately. main.js §20 swaps this text on a
+           permanent 5.5s interval, so a live region made screen readers
+           interrupt with a new pet-care fact every 5.5 seconds for the whole
+           visit — and the hover/focus pause never fires in browse mode, so
+           there was no way to stop it. The tips are decorative trivia. -->
+      <p class="tip-strip__text" id="tipStripText">A dog's sense of smell is tens of thousands of times stronger than a human's.</p>
     </div>
   </div>
 </section>
@@ -916,14 +951,14 @@
         <form class="form" id="enquiryForm" novalidate>
           <div class="field">
             <label for="f-name">Your Name <span class="req" aria-hidden="true">*</span></label>
-            <input type="text" id="f-name" name="name" autocomplete="name" placeholder="e.g. Rohit Sharma" required>
-            <small class="field__err" data-err></small>
+            <input type="text" id="f-name" name="name" autocomplete="name" placeholder="e.g. Rohit Sharma" required aria-describedby="f-name-err">
+            <small class="field__err" id="f-name-err" data-err role="alert"></small>
           </div>
 
           <div class="field">
             <label for="f-phone">Phone Number <span class="req" aria-hidden="true">*</span></label>
-            <input type="tel" id="f-phone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number" required>
-            <small class="field__err" data-err></small>
+            <input type="tel" id="f-phone" name="phone" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number" required aria-describedby="f-phone-err">
+            <small class="field__err" id="f-phone-err" data-err role="alert"></small>
           </div>
 
           <div class="field">
@@ -1018,7 +1053,7 @@
     <div class="footer__col">
       <h3>Contact Us</h3>
       <ul class="footer__contact">
-        <li><svg class="ic"><use href="#i-pin"/></svg><span data-field="address-inline">Shop No. 39, Habitech Panchtatva, near Galaxy Vega, Tech Zone IV, Greater Noida 201318</span></li>
+        <li><svg class="ic"><use href="#i-pin"/></svg><span data-field="address-inline">Shop No. 39, Habitech Panchtatva, near Galaxy Vega, Tech Zone IV, Amrapali Dream Valley, Greater Noida, Uttar Pradesh 201318</span></li>
         <li><svg class="ic"><use href="#i-phone"/></svg><a href="tel:+918851203070" data-field="phone-href phone-text">+91 88512 03070</a></li>
         <li><svg class="ic"><use href="#i-wa"/></svg><a href="https://wa.me/918851203070" target="_blank" rel="noopener" data-field="wa-href">WhatsApp us</a></li>
         <li><svg class="ic"><use href="#i-mail"/></svg><a href="mailto:vspetshop2007@gmail.com" data-field="email-href email-text">vspetshop2007@gmail.com</a></li>

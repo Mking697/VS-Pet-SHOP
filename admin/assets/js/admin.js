@@ -391,7 +391,11 @@
 
     const b = state.business;
     const phoneD = digits10(b.phone);
-    if (phoneD) ld.telephone = '+91-' + phoneD.slice(0, 5) + '-' + phoneD.slice(5);
+    /* E.164, no separators — the form Google's own examples use and what
+       click-to-call handlers expect. This MUST stay in the same format as the
+       telephone value hand-written in index.html's JSON-LD, or the owner's
+       next save silently rewrites it and the two drift apart. */
+    if (phoneD) ld.telephone = '+91' + phoneD;
     if (b.email.trim()) ld.email = b.email.trim();
     if (b.gmb.trim()) ld.hasMap = b.gmb.trim();
 

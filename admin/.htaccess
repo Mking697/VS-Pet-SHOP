@@ -1,0 +1,15 @@
+# ---- /admin/ must never appear in search results ----
+# The <meta name="robots" content="noindex, nofollow"> inside index.html only
+# works if Google is allowed to crawl the page and read it. robots.txt used to
+# carry `Disallow: /admin/`, which blocked exactly that — and, since robots.txt
+# is a public file, also advertised the admin panel's existence to anyone who
+# looked. The Disallow was removed; this header carries the same instruction at
+# the HTTP level, so the page is crawlable, immediately seen as noindex, and no
+# longer broadcast.
+#
+# The passphrase gate on this panel is a client-side speed bump, NOT
+# authentication (see CLAUDE.md §9) — keep all three layers: this header, the
+# meta tag, and not sharing the URL.
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow, noarchive"
+</IfModule>

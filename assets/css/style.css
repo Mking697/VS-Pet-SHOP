@@ -1111,7 +1111,16 @@ iframe{ border:0; display:block; }
     transform:translateX(105%); transition:transform 340ms var(--e-out);
     overflow-y:auto;
   }
-  .nav.is-open{ transform:none; }
+  /* `visibility` — not just `transform` — because the closed drawer is still
+     display:flex and therefore still in the tab order. On every mobile load,
+     tabbing from the logo walked through 9 invisible off-screen stops (close
+     button, 7 links, the Call CTA) with no visible focus indicator, and the
+     browser can't scroll them into view because the panel is position:fixed
+     under html{overflow-x:hidden}. visibility:hidden removes descendants from
+     both the tab order and the accessibility tree. The 340ms delay on the way
+     out keeps the slide-out animation visible before it's hidden. */
+  .nav{ visibility:hidden; transition:transform 340ms var(--e-out), visibility 0s linear 340ms; }
+  .nav.is-open{ transform:none; visibility:visible; transition:transform 340ms var(--e-out), visibility 0s; }
   .nav__list{ flex-direction:column; align-items:stretch; gap:4px; }
   .nav__link{ padding:14px 16px; font-size:1.05rem; border-radius:var(--r-md); }
   .nav__cta{ display:inline-flex; margin-top:var(--s-1); }

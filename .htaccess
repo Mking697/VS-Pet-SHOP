@@ -18,14 +18,34 @@ AddDefaultCharset UTF-8
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Redirect http -> https
-  RewriteCond %{HTTPS} off
-  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # ---- Legacy URLs from the domain's PREVIOUS owner ----
+  # vspetshop.com was previously an Amazon-affiliate WooCommerce store, and
+  # those URLs are still in Google's index (verified Sep 2026, e.g.
+  # /brand/visit-the-aibors-store/ and /product/xsyg-dog-boots...). They never
+  # existed on this site. 410 Gone tells Google they are permanently gone,
+  # which de-indexes faster and with fewer retries than the 404 they returned
+  # before. Do NOT 301 these to the homepage — redirecting hundreds of
+  # irrelevant product URLs to / produces soft-404s, which is its own quality
+  # problem. None of these prefixes collide with anything this site serves.
+  RewriteRule ^(product|product-category|brand|category|tag|author)(/|$) - [G,L]
+  RewriteRule ^wp-(admin|content|includes|login|json)(/|$) - [G,L]
+  RewriteRule ^(feed|comments|xmlrpc\.php|wp-sitemap\.xml)(/|$) - [G,L]
 
-  # Redirect www -> non-www (matches the canonical/OG/JSON-LD URLs in index.html,
-  # which all use https://vspetshop.com without www)
+  # Canonicalise /index.html and /index to / (the .html-stripping rule below
+  # makes all three resolve to the same document; the canonical tag already
+  # mitigates it, this just stops them existing as separate URLs at all).
+  # MUST come before the stripping rule or /index gets rewritten first.
+  RewriteCond %{THE_REQUEST} \s/+index(\.html)?[\s?] [NC]
+  RewriteRule ^ / [L,R=301]
+
+  # Redirect www -> non-www, straight to HTTPS so http://www. is a single hop
+  # rather than two (www->https://www->non-www).
   RewriteCond %{HTTP_HOST} ^www\.vspetshop\.com$ [NC]
   RewriteRule ^(.*)$ https://vspetshop.com/$1 [L,R=301]
+
+  # Redirect http -> https (non-www hosts)
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # Remove trailing .html from URLs (/contact instead of /contact.html)
   RewriteCond %{REQUEST_FILENAME}.html -f
@@ -38,6 +58,7 @@ AddDefaultCharset UTF-8
   AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript
   AddOutputFilterByType DEFLATE application/javascript application/x-javascript
   AddOutputFilterByType DEFLATE application/json image/svg+xml
+  AddOutputFilterByType DEFLATE application/xml text/xml
 </IfModule>
 
 # ---- Browser caching ----

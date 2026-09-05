@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- changefreq and priority are omitted deliberately: Google has publicly
+     stated it ignores both. lastmod it does use — update it when the page's
+     CONTENT meaningfully changes, not on every CSS tweak (an obviously
+     unreliable lastmod gets the whole sitemap devalued). -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://vspetshop.com/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2026-09-05</lastmod>
   </url>
 </urlset>

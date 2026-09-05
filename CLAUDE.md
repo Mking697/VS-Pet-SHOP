@@ -643,3 +643,66 @@ box of **370px**, not 440px.
 **0–2 points** — do it for trust/SEO/content-integrity reasons (see §6 and the open SEO
 items above), not for speed. The Google Maps iframe is 465KB but correctly lazy-loaded
 and costs **0 points**; facading it is a mobile-data kindness, not a perf fix.
+
+### SEO + content-integrity round
+
+- **This domain has a previous life.** `vspetshop.com` was an Amazon-affiliate
+  WooCommerce store before this shop bought it, and those URLs were still in Google's
+  index (verified: `/brand/visit-the-aibors-store/`, `/product/xsyg-dog-boots…`).
+  `.htaccess` now returns **410 Gone** for `/product/`, `/product-category/`, `/brand/`,
+  `/category/`, `/tag/`, `/author/`, `wp-*` and `/feed/` — 410 de-indexes faster than
+  the 404 they were returning. **Do not 301 these to the homepage**; hundreds of
+  irrelevant product URLs redirecting to `/` produces soft-404s, which is its own
+  quality problem. Expect them to drop out over 4–8 weeks.
+  **Still to do (needs the owner):** set up Google Search Console as a *Domain*
+  property (DNS TXT at GoDaddy) and check **Manual actions** first — if the previous
+  owner earned a penalty, it is inherited and nothing else in the SEO list matters
+  until it's cleared.
+- **`robots.txt` no longer carries `Disallow: /admin/`.** It is a public file, so that
+  line advertised the admin panel's existence — and it also stopped Google crawling the
+  page, which is the only way it can see the `noindex` meta tag. `/admin/.htaccess` now
+  sends `X-Robots-Tag: noindex, nofollow, noarchive` instead. Keep all three layers
+  (header, meta tag, not sharing the URL); do not re-add the Disallow.
+- **Gallery copy de-claimed.** It read "Real photos" / "Actual photos from our store",
+  with a caption naming Tech Zone IV and `alt="VS Pet Shop storefront"` — all attached
+  to Unsplash stock. That is the same §6 violation that got "5,000+ happy families"
+  removed, and worse, because it's a checkable claim about a real address. Restore the
+  stronger wording only once the owner's own photos are in `assets/img/`.
+- **`og:image` was a 404**, so every WhatsApp share rendered with no image — a direct
+  conversion loss for a shop whose main channel is WhatsApp. Now points at the hero
+  photo cropped to 1200×630 as an **interim**. Deliberately the dog photo rather than a
+  stock storefront, so it reads as brand imagery instead of asserting premises.
+  Same for the JSON-LD `image` (a required property for LocalBusiness — a 404 there can
+  forfeit rich-result eligibility). Replace both with a real photo when one exists.
+- **Title was 84 chars** and truncated before "Open 24 Hours" — the shop's only real
+  differentiator against the competitor 300m away. Now 56 chars, local term first.
+- JSON-LD gained `@id`, `currenciesAccepted`, `paymentAccepted` (verbatim from FAQ 7,
+  not invented), `areaServed: Greater Noida` (supported by FAQ 2's delivery answer), and
+  `telephone` in E.164. **`admin.js`'s JSON-LD writer was updated to emit E.164 too** —
+  if you change one, change the other or the owner's next save silently reverts it.
+- Footer address was missing "Amrapali Dream Valley" and "Uttar Pradesh" — two different
+  address strings on one page is a real NAP inconsistency for local ranking. Fixed.
+- `sitemap.xml` dropped `changefreq`/`priority` (Google ignores both) and gained
+  `lastmod`. Update `lastmod` when *content* changes, not on CSS tweaks.
+
+### Accessibility fixes shipped (blockers only)
+
+- **Form errors are now announced.** Each input has `aria-describedby` pointing at its
+  error `<small>`, which carries `role="alert"`. Previously a screen-reader user heard
+  "invalid entry" and was never told what was wrong, on the site's only conversion path.
+- **The closed mobile drawer no longer holds 9 focus stops.** It was `translateX(105%)`
+  but still `display:flex`, so tabbing from the logo walked through the close button,
+  7 links and the CTA — all off-screen, no visible focus ring, unscrollable because the
+  panel is `position:fixed` under `html{overflow-x:hidden}`. Now `visibility:hidden`
+  when closed, with a 340ms delay so the slide-out still animates.
+- **The tip strip's `aria-live` is gone.** It swapped text on a permanent 5.5s interval,
+  so screen readers interrupted with a new fact every 5.5 seconds for the whole visit,
+  and the hover/focus pause never fires in browse mode. The tips are decorative.
+
+**Accessibility still open** (from the full audit, not yet fixed): no pause control for
+the two marquees (hover-only, so unreachable by keyboard or touch — WCAG 2.2.2, and the
+reviews marquee holds real content people want to read); ~10 contrast failures including
+the WhatsApp FAB glyph (1.98:1, needs 3:1) and the ribbon text (2.80:1, needs 4.5:1);
+151 icon `<svg>`s unmarked `aria-hidden`; neither overlay confines focus (`inert` on the
+rest of the page is the cheap fix); review marquee clones are duplicated in the a11y
+tree; `.fab`/`.mobar` paint over the open drawer.
