@@ -683,7 +683,15 @@ and costs **0 points**; facading it is a mobile-data kindness, not a perf fix.
 - Footer address was missing "Amrapali Dream Valley" and "Uttar Pradesh" — two different
   address strings on one page is a real NAP inconsistency for local ranking. Fixed.
 - `sitemap.xml` dropped `changefreq`/`priority` (Google ignores both) and gained
-  `lastmod`. Update `lastmod` when *content* changes, not on CSS tweaks.
+  `lastmod`. Update `lastmod` when *content* changes, not on CSS tweaks (an obviously
+  unreliable lastmod gets the whole sitemap devalued).
+  **Keep this file minimal and ASCII-only — no XML comments.** It was first shipped with
+  a multi-line explanatory comment above `<urlset>` containing an em dash and a curly
+  apostrophe. That is valid XML and parses fine everywhere I tested (locally, live, and
+  as Googlebot), but Search Console still reported **"Sitemap could not be read"** with
+  0 discovered pages on its first read. Rather than keep guessing at a parser we can't
+  observe, the comment was removed: it was developer documentation sitting in a
+  machine-consumed file, which is where this note belongs instead.
 
 ### Accessibility fixes shipped (blockers only)
 
