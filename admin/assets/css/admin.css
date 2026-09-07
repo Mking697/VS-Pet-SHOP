@@ -127,6 +127,22 @@ body.adm-body {
 .adm-warn--danger { background: #FEE9EC; border-color: #F3A5AE; color: #7A1C28; }
 .adm-warn--danger svg { color: #B42318; }
 
+/* Explanatory intro block — calmer than .adm-warn, used where a section needs
+   a few sentences of "what is this and do I even need it" before the fields
+   (currently the Analytics & Ads section). */
+.adm-note {
+  background: #F4F7FF;
+  border: 1px solid #C9D8F5;
+  color: #33415C;
+  padding: 12px 16px;
+  border-radius: var(--r-md, 18px);
+  font-size: .86rem;
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+.adm-note p { margin: 0 0 .6em; }
+.adm-note p:last-child { margin-bottom: 0; }
+
 /* ---------- Main two-pane layout ---------- */
 .adm-main {
   flex: 1;

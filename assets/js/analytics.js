@@ -2,16 +2,18 @@
    VS PET SHOP — analytics & ads conversion tracking
    Vanilla JS. No dependencies, no build step. Loaded `defer`.
 
-   ── FILL IN YOUR IDs BELOW. THAT IS THE ONLY EDIT NEEDED. ──
+   ── SET THE IDs FROM THE ADMIN PANEL, NOT IN THIS FILE. ──
+   admin/ → "Analytics & Ads" section. They are stored as data-attributes on
+   this script's tag in index.html; see the CONFIG block below for why.
 
-   While every ID below is left blank this file does NOTHING: no script is
-   injected, no network request is made, no cookie is set. That is deliberate,
-   so the tracking plumbing could ship before the accounts existed without
-   costing the site a single byte. Fill an ID in and that platform switches on
-   by itself on the next page load.
+   While every ID is blank this file does NOTHING: no script is injected, no
+   network request is made, no cookie is set. That is deliberate, so the
+   tracking plumbing could ship before the accounts existed without costing the
+   site a single byte. Fill an ID in and that platform switches on by itself on
+   the next page load.
 
-   WHERE TO GET EACH ID
-   --------------------
+   WHERE TO GET EACH ID (the admin panel repeats this next to each field)
+   ---------------------------------------------------------------------
    GA4_ID              analytics.google.com → Admin → Data streams → your web
                        stream → "Measurement ID". Looks like G-XXXXXXXXXX.
 
@@ -48,16 +50,35 @@
 (function () {
   'use strict';
 
-  /* ---------- CONFIG — the only thing you edit ---------- */
-  var GA4_ID         = '';   // e.g. 'G-XXXXXXXXXX'
-  var GOOGLE_ADS_ID  = '';   // e.g. 'AW-123456789'
-  var META_PIXEL_ID  = '';   // e.g. '1234567890123456'
+  /* ---------- CONFIG ----------
+     The IDs are NOT stored in this file. They live as data-attributes on this
+     script's own <script> tag in index.html, so the shop owner can set them
+     from the admin panel (Analytics & Ads section) without touching code and
+     without having to upload this file at all — index.html is the only file
+     they already download and re-upload.
+
+     Tracking IDs are not secrets: a GA4 measurement ID or a Meta pixel ID is
+     visible in the page source of every site that uses one. Nothing is being
+     exposed here that isn't public on any site running these tags.
+
+     `document.currentScript` is the script being executed; the querySelector
+     is a fallback for the rare case it's unavailable (some older browsers on
+     deferred scripts). --------------------------------------------------- */
+  var tag = document.currentScript ||
+            document.querySelector('script[src*="analytics.js"]');
+  if (!tag) return;
+
+  var cfg = function (name) { return (tag.getAttribute(name) || '').trim(); };
+
+  var GA4_ID        = cfg('data-ga4');          // e.g. 'G-XXXXXXXXXX'
+  var GOOGLE_ADS_ID = cfg('data-google-ads');   // e.g. 'AW-123456789'
+  var META_PIXEL_ID = cfg('data-meta-pixel');   // e.g. '1234567890123456'
 
   var ADS_LABELS = {
-    call:       '',   // someone tapped a "Call Now" / phone link
-    whatsapp:   '',   // someone tapped a WhatsApp link or the floating button
-    enquiry:    '',   // someone completed the enquiry form (highest intent)
-    directions: ''    // someone tapped "Get Directions"
+    call:       cfg('data-label-call'),        // tapped a "Call Now" / phone link
+    whatsapp:   cfg('data-label-whatsapp'),    // tapped a WhatsApp link or the FAB
+    enquiry:    cfg('data-label-enquiry'),     // completed the enquiry form
+    directions: cfg('data-label-directions')   // tapped "Get Directions"
   };
   /* ---------- END CONFIG ---------- */
 

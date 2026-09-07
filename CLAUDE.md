@@ -721,14 +721,26 @@ tree; `.fab`/`.mobar` paint over the open drawer.
 
 Added when the owner started running Google Ads and Meta (Facebook/Instagram) ads.
 
-**Everything is gated behind IDs at the top of the file, and every ID ships blank.**
+**The IDs are set from the admin panel, not in the file.** They live as
+data-attributes on the `<script src="analytics.js">` tag in `index.html`, and
+`analytics.js` reads them off its own tag via `document.currentScript`. That is
+deliberate: `index.html` is the only file the owner already downloads and re-uploads, so
+adding a tracking ID needs no extra file and no code editing. Tracking IDs are not
+secrets — a GA4 or pixel ID is visible in the page source of every site that runs one.
+The admin panel's **Analytics & Ads** section carries the field-by-field guide for where
+each ID comes from, plus the three caveats below in plain Hinglish for the owner.
+
+**Every ID ships blank, and blank means completely off.**
 While they are blank the script returns immediately — no tag is injected, no request is
 made, no cookie is set. So the plumbing could ship before the ad accounts existed at
 zero cost. Fill an ID in and that platform switches itself on next page load. The file's
 header comment says exactly where each ID comes from.
 
-- `GA4_ID` (`G-…`), `GOOGLE_ADS_ID` (`AW-…`), `META_PIXEL_ID` (numeric), plus one Google
-  Ads conversion **label** per tracked action in `ADS_LABELS`.
+- Seven `data-field` keys, all `kind:'attr'` on that one script tag: `ga4-id`
+  (`data-ga4`), `ads-id` (`data-google-ads`), `meta-pixel-id` (`data-meta-pixel`), and
+  one label per tracked action (`ads-label-call` / `-whatsapp` / `-enquiry` /
+  `-directions`). `renderSimpleFieldsInto` gained optional `hint` support for this
+  section — the guide text renders under each input.
 - **One `gtag.js` load serves both GA4 and Google Ads** (two `config` calls). Loading it
   twice — once per product — is a common mistake that double-counts everything.
 

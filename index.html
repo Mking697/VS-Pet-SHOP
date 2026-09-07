@@ -1110,10 +1110,24 @@
 </div>
 
 <script src="assets/js/main.js?v=8" defer></script>
-<!-- Analytics + ads conversion tracking. Deliberately loaded LAST and
-     `defer`red, and it injects nothing at all until an ID is filled in at the
-     top of the file — so an unconfigured site pays zero bytes for it. See the
-     header comment in analytics.js for where each ID comes from. -->
-<script src="assets/js/analytics.js?v=1" defer></script>
+<!-- Analytics + ads conversion tracking. Loaded LAST and `defer`red, and it
+     injects nothing at all while these attributes are empty — an unconfigured
+     site pays zero bytes for it.
+
+     The IDs live HERE rather than inside analytics.js so the shop owner can
+     set them from admin/ ("Analytics & Ads" section) without touching code:
+     index.html is the only file they already download and re-upload. They are
+     not secrets — a GA4 or pixel ID is visible in the source of every site
+     that runs one. analytics.js reads them off its own tag via
+     document.currentScript. -->
+<script src="assets/js/analytics.js?v=2" defer
+        data-field="ga4-id ads-id meta-pixel-id ads-label-call ads-label-whatsapp ads-label-enquiry ads-label-directions"
+        data-ga4=""
+        data-google-ads=""
+        data-meta-pixel=""
+        data-label-call=""
+        data-label-whatsapp=""
+        data-label-enquiry=""
+        data-label-directions=""></script>
 </body>
 </html>

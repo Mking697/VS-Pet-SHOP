@@ -182,6 +182,26 @@
   addField({ key: 'og-title', label: 'Social Share Title (Open Graph + Twitter — WhatsApp/Facebook/Twitter link previews)', input: 'text', kind: 'attr', attr: 'content' });
   addField({ key: 'og-desc', label: 'Social Share Description (Open Graph + Twitter)', input: 'textarea', kind: 'attr', attr: 'content' });
 
+  /* Analytics & ads IDs. These are attributes on the <script src="analytics.js">
+     tag in index.html — see the comment above that tag for why they live there
+     rather than inside analytics.js. Blank = that platform stays completely
+     switched off (no tag loaded, no cookie set). */
+  addField({ key: 'ga4-id', label: 'Google Analytics Measurement ID', input: 'text', kind: 'attr', attr: 'data-ga4',
+    hint: 'analytics.google.com → Admin (bottom-left gear) → Data streams → click your web stream → "Measurement ID" at the top right. Starts with G-. Leave blank to switch Analytics off.' });
+  addField({ key: 'ads-id', label: 'Google Ads Conversion ID', input: 'text', kind: 'attr', attr: 'data-google-ads',
+    hint: 'ads.google.com → Tools (spanner icon) → Conversions → open any conversion action → "Tag setup" → "Use Google tag". Starts with AW-. The same ID is used for all four labels below.' });
+  addField({ key: 'meta-pixel-id', label: 'Meta Pixel ID (Facebook / Instagram ads)', input: 'text', kind: 'attr', attr: 'data-meta-pixel',
+    hint: 'business.facebook.com → Events Manager → Data sources → click your pixel → the long number shown under its name. Digits only. Leave blank to switch the pixel off.' });
+
+  addField({ key: 'ads-label-call', label: 'Ads label — someone tapped Call', input: 'text', kind: 'attr', attr: 'data-label-call',
+    hint: 'In Google Ads create a conversion action for phone clicks, then on its Tag setup screen copy the part AFTER the slash in AW-123456789/AbCdEfGhIj' });
+  addField({ key: 'ads-label-whatsapp', label: 'Ads label — someone tapped WhatsApp', input: 'text', kind: 'attr', attr: 'data-label-whatsapp',
+    hint: 'Same, from a separate conversion action for WhatsApp clicks.' });
+  addField({ key: 'ads-label-enquiry', label: 'Ads label — enquiry form completed', input: 'text', kind: 'attr', attr: 'data-label-enquiry',
+    hint: 'Same, from a separate conversion action. This is the highest-intent action on the site — worth marking as your primary conversion in Google Ads.' });
+  addField({ key: 'ads-label-directions', label: 'Ads label — someone tapped Get Directions', input: 'text', kind: 'attr', attr: 'data-label-directions',
+    hint: 'Same, from a separate conversion action for directions clicks.' });
+
   addField({ key: 'hero-lead', label: 'Hero Lead Paragraph', input: 'textarea', kind: 'simple' });
   addField({ key: 'hero-cta-primary', label: 'Primary Button Text', input: 'text', kind: 'smart' });
   addField({ key: 'hero-cta-secondary', label: 'Secondary Button Text', input: 'text', kind: 'smart' });
@@ -699,7 +719,12 @@
   function renderSimpleFieldsInto(container, fields) {
     fields.forEach(f => {
       const wrap = el('div', { class: 'adm-field' }, []);
-      wrap.innerHTML = `<label for="f_${f.key}">${escapeHtml(f.label)}</label>${fieldInputHtml(f, state.values[f.key] || '')}`;
+      /* Optional `hint` renders under the input, same as businessField()'s.
+         Used heavily by the Analytics & Ads section, where every field needs
+         "here is exactly where to find this ID" next to it. */
+      wrap.innerHTML = `<label for="f_${f.key}">${escapeHtml(f.label)}</label>`
+        + fieldInputHtml(f, state.values[f.key] || '')
+        + (f.hint ? `<small class="adm-hint">${escapeHtml(f.hint)}</small>` : '');
       const input = wrap.querySelector('[data-fkey]');
       input.id = `f_${f.key}`;
       input.addEventListener('input', () => { state.values[f.key] = input.value; updatePreview(); });
@@ -774,6 +799,68 @@
       ldNote.innerHTML = 'Structured data (the invisible "rich result" info Google reads) is kept in sync automatically from Business Info below — phone, email, Google Business link, Instagram/Facebook/YouTube. ' +
         '<strong>Exception:</strong> the structured-data postal address does not auto-update from the Full Address field — if the shop ever moves, also edit the JSON-LD block directly in index.html.';
       body.appendChild(ldNote);
+      root.appendChild(section);
+    }
+
+    /* ---- Analytics & Ads ---- */
+    {
+      const { section, body } = makeSection('Analytics & Ads');
+
+      const intro = el('div', { class: 'adm-note' });
+      intro.innerHTML =
+        '<p><strong>What this does.</strong> Lets you see how many people visit the site, ' +
+        'and — if you run Google or Facebook/Instagram ads — which adverts actually produce ' +
+        'phone calls and WhatsApp messages, instead of guessing.</p>' +
+        '<p><strong>Nothing is on until you paste an ID in.</strong> While every box below is ' +
+        'empty the site loads no tracking code at all and sets no cookies. Fill one in, save, ' +
+        're-upload index.html, and that platform starts working on the next page load.</p>' +
+        '<p><strong>You do not need all of them.</strong> Just want visitor numbers? Fill in only ' +
+        'the Google Analytics ID and ignore the rest. The Ads labels only matter once you are ' +
+        'actually paying for adverts.</p>';
+      body.appendChild(intro);
+
+      renderSimpleFieldsInto(body, [
+        FIELD_BY_KEY['ga4-id'],
+        FIELD_BY_KEY['meta-pixel-id'],
+        FIELD_BY_KEY['ads-id']
+      ]);
+
+      const labelsNote = el('p', { style: 'font-size:.8rem;color:var(--ink-soft);margin:14px 0 8px' });
+      labelsNote.innerHTML =
+        '<strong>Google Ads conversion labels.</strong> Only needed if you filled in the Google Ads ID above. ' +
+        'In Google Ads you create a separate "conversion action" for each thing you want to count, and each one ' +
+        'gives you a short code. Leave any of these blank and that action simply is not reported to Google Ads ' +
+        '(it still shows in Analytics).';
+      body.appendChild(labelsNote);
+
+      renderSimpleFieldsInto(body, [
+        FIELD_BY_KEY['ads-label-call'],
+        FIELD_BY_KEY['ads-label-whatsapp'],
+        FIELD_BY_KEY['ads-label-enquiry'],
+        FIELD_BY_KEY['ads-label-directions']
+      ]);
+
+      const caveats = el('div', { class: 'adm-warn' });
+      caveats.innerHTML =
+        '<svg class="ic"><use href="#i-warn"/></svg>' +
+        '<div><strong>Teen baatein jaan lo:</strong><br>' +
+        '1. <strong>Ads se Google ranking nahi badhti.</strong> Ads paisa dekar turant traffic laate hain; ' +
+        'SEO free traffic dheere banata hai. Dono alag cheezein hain.<br>' +
+        '2. <strong>Site thodi dheemi hogi.</strong> Abhi site par koi third-party script nahi hai. ' +
+        'Analytics/pixel lagate hi 1-2 lag jaayenge. Ye tracking ki keemat hai.<br>' +
+        '3. <strong>Facebook kam conversions dikhayega</strong> asli se. Is site par backend nahi hai, ' +
+        'isliye sirf browser pixel chal sakta hai, aur iPhone/ad-blocker uska hissa kha jaate hain. ' +
+        'Ye setup ki galti nahi, platform ki limitation hai.</div>';
+      caveats.style.marginTop = '14px';
+      body.appendChild(caveats);
+
+      const privacyNote = el('p', { style: 'font-size:.8rem;color:var(--ink-soft);margin-top:12px' });
+      privacyNote.innerHTML =
+        'The site already has a <strong>Privacy Policy</strong> page (linked in the footer) that mentions ' +
+        'Analytics, Google Ads and the Meta pixel. Facebook requires a privacy policy URL on your ad account ' +
+        'and Google Ads requires the same disclosure, so leave that page in place.';
+      body.appendChild(privacyNote);
+
       root.appendChild(section);
     }
 
