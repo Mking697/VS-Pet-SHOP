@@ -1063,7 +1063,7 @@
   </div>
 
   <div class="container footer__bottom">
-    <p>&copy; <span id="year">2026</span> VS Pet Shop. All rights reserved.</p>
+    <p>&copy; <span id="year">2026</span> VS Pet Shop. All rights reserved. &middot; <a href="/privacy.html">Privacy Policy</a></p>
     <p class="footer__made">Made with <svg class="ic footer__heart"><use href="#i-heart"/></svg> for pets and their people</p>
   </div>
 </footer>
@@ -1109,6 +1109,11 @@
   </div>
 </div>
 
-<script src="assets/js/main.js?v=7" defer></script>
+<script src="assets/js/main.js?v=8" defer></script>
+<!-- Analytics + ads conversion tracking. Deliberately loaded LAST and
+     `defer`red, and it injects nothing at all until an ID is filled in at the
+     top of the file — so an unconfigured site pays zero bytes for it. See the
+     header comment in analytics.js for where each ID comes from. -->
+<script src="assets/js/analytics.js?v=1" defer></script>
 </body>
 </html>

@@ -714,3 +714,56 @@ the WhatsApp FAB glyph (1.98:1, needs 3:1) and the ribbon text (2.80:1, needs 4.
 151 icon `<svg>`s unmarked `aria-hidden`; neither overlay confines focus (`inert` on the
 rest of the page is the cheap fix); review marquee clones are duplicated in the a11y
 tree; `.fab`/`.mobar` paint over the open drawer.
+
+---
+
+## 11. Analytics & ads conversion tracking (`assets/js/analytics.js`)
+
+Added when the owner started running Google Ads and Meta (Facebook/Instagram) ads.
+
+**Everything is gated behind IDs at the top of the file, and every ID ships blank.**
+While they are blank the script returns immediately — no tag is injected, no request is
+made, no cookie is set. So the plumbing could ship before the ad accounts existed at
+zero cost. Fill an ID in and that platform switches itself on next page load. The file's
+header comment says exactly where each ID comes from.
+
+- `GA4_ID` (`G-…`), `GOOGLE_ADS_ID` (`AW-…`), `META_PIXEL_ID` (numeric), plus one Google
+  Ads conversion **label** per tracked action in `ADS_LABELS`.
+- **One `gtag.js` load serves both GA4 and Google Ads** (two `config` calls). Loading it
+  twice — once per product — is a common mistake that double-counts everything.
+
+**What counts as a conversion here.** There is no cart and no checkout, so the only real
+actions are: phone the shop, message it on WhatsApp, complete the enquiry form, or ask
+for directions. Those four are wired to Ads labels. `view_catalog` goes to GA4 only —
+deliberately not an Ads conversion, because optimising bids toward "opened a popup"
+teaches the algorithm the wrong thing.
+
+**The enquiry event is dispatched from `main.js` §10, not bound here.** `main.js` fires
+`document.dispatchEvent(new CustomEvent('vsps:enquiry-sent'))` only after validation
+passed *and* the WhatsApp tab actually opened; `analytics.js` listens for it. Binding a
+second `submit` listener in `analytics.js` instead would have counted failed validations
+as conversions. Keep that dispatch after the popup-blocker check, never before it.
+
+**Two things that genuinely cannot be done on this stack** (§1: no backend) — say so
+plainly rather than promising them:
+- **Meta's Conversions API** (the server-side channel that recovers conversions lost to
+  iOS/ad-blockers) is impossible. Browser pixel only. Expect Meta to under-report.
+- **Enhanced Conversions for Google Ads** (hashed email/phone) has nothing to read — the
+  form never posts anywhere, it just opens a `wa.me` deep link, so there is no
+  post-conversion page.
+
+**The performance cost is real and was accepted knowingly.** Before this, the site had
+**zero** third-party scripts (§0 self-hosted the fonts to get there). gtag.js and the
+Meta pixel put two back. That will cost some of the mobile score won in the performance
+round. It is the price of knowing which adverts work; it is not a regression to "fix".
+
+**`privacy.html`** was added at the same time and is not optional: Meta requires a
+privacy-policy URL on the ad account, Google Ads policy requires disclosing data
+collection, and the GA4 terms require the same. It describes what this site actually
+does — notably that the enquiry form submits nothing anywhere, it only opens WhatsApp —
+and it is linked from the footer and listed in `sitemap.xml`. Update the date at the top
+of it whenever the tracking setup changes. It is written to be accurate rather than
+lawyerly; have it reviewed if certainty matters.
+
+**Ads do not improve organic ranking.** They are separate systems. Worth repeating to
+the owner, who asked whether running ads would make the site rank.

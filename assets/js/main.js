@@ -312,6 +312,17 @@
         setTimeout(function () { note.textContent = ''; }, 6000);
       }
       pawBurst(form.querySelector('button[type="submit"]'));
+
+      /* Fires only on a genuinely successful send — after validation passed
+         and the WhatsApp tab actually opened. analytics.js listens for this
+         to record the conversion; it deliberately does NOT bind its own
+         submit handler, because that would fire on failed validation too and
+         inflate the conversion count. Keep this dispatch after the popup
+         check above, never before it. */
+      document.dispatchEvent(new CustomEvent('vsps:enquiry-sent', {
+        detail: { topic: topic }
+      }));
+
       form.reset();
     });
   }
