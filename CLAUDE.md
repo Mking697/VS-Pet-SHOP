@@ -717,6 +717,36 @@ tree; `.fab`/`.mobar` paint over the open drawer.
 
 ---
 
+## 10b. Operational trap: never fetch a `?v=N` URL before the deploy lands
+
+`.htaccess` caches CSS/JS for a year and Hostinger's CDN sits in front of it. So the
+cache key is the **full URL including the query string** — which means:
+
+**Requesting `style.css?v=9` or `analytics.js?v=2` while the server still holds the OLD
+file caches that old body against the new URL for a year.** The cache-buster is then
+dead on arrival: every visitor gets stale code from a URL that was supposed to be fresh.
+
+This happened for real. During the analytics work the new `analytics.js?v=2` was polled
+repeatedly to check whether the deploy had landed. It had not. The CDN cached the v1
+body under the v2 URL (`x-hcdn-cache-status: HIT`, `Age: 478`, `max-age=31536000`), and
+the site kept serving old JS even after the correct file was on disk.
+
+**The rule:** after pushing, confirm the deploy has completed in Hostinger's dashboard
+(the "Last deployment" panel shows the commit hash) *before* requesting any bumped URL.
+To check whether a file is on the server without touching the cached URL, use a throwaway
+query string instead — `?nocache=12345` — which has its own cache key and cannot poison
+the real one.
+
+**If it happens anyway:** Hostinger dashboard → Essentials → Cache → **Clear cache**.
+Bumping to the next `?v=N` also works, but it churns the repo to fix a cache problem.
+
+Related: Hostinger's auto-deploy is not always immediate. It has silently skipped a push
+(dashboard kept showing the previous commit until **Redeploy** was clicked manually), so
+"pushed" and "deployed" are genuinely two different states here — verify the commit hash
+in the dashboard rather than assuming.
+
+---
+
 ## 11. Analytics & ads conversion tracking (`assets/js/analytics.js`)
 
 Added when the owner started running Google Ads and Meta (Facebook/Instagram) ads.
