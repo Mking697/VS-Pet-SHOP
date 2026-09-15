@@ -843,7 +843,9 @@ validation/timing logic in `main.js`/`analytics.js` and would double-count). Sta
 - `data-label-enquiry="m_dxCP60tPgcEO-2y9ZE"` — done
 - `data-label-call="Ct9OCOKht_gcEO-2y9ZE"` — done
 - `data-label-whatsapp="rmNnCI6_vPgcEO-2y9ZE"` — done
-- `data-label-directions` — still blank, not yet created
+- `data-label-directions="4u7wCNe2t_gcEO-2y9ZE"` — done
+
+All four are now wired end to end.
 
 All four share the one `AW-18435201903` account tag; only the label after the `/`
 differs per action. Verified each with a Node `vm` sandbox (shim `window`/`document`,
