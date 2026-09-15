@@ -786,13 +786,25 @@ passed *and* the WhatsApp tab actually opened; `analytics.js` listens for it. Bi
 second `submit` listener in `analytics.js` instead would have counted failed validations
 as conversions. Keep that dispatch after the popup-blocker check, never before it.
 
-**Two things that genuinely cannot be done on this stack** (§1: no backend) — say so
-plainly rather than promising them:
+**One thing that genuinely cannot be done on this stack** (§1: no backend) — say so
+plainly rather than promising it:
 - **Meta's Conversions API** (the server-side channel that recovers conversions lost to
   iOS/ad-blockers) is impossible. Browser pixel only. Expect Meta to under-report.
-- **Enhanced Conversions for Google Ads** (hashed email/phone) has nothing to read — the
-  form never posts anywhere, it just opens a `wa.me` deep link, so there is no
-  post-conversion page.
+
+**Correction to an earlier claim in this file:** it used to say Enhanced Conversions for
+Google Ads was impossible here too, on the theory that it needs a server-rendered
+"thank you" page to read submitted data from. That's wrong for the web-based, automatic
+variant Google Ads offers (Tools → Conversions → the account-level "Turn on enhanced
+conversions" toggle, surfaced automatically at the end of the Google-tag install flow) —
+it works by having `gtag.js` (already installed) scan the page's own form fields for
+values matching common `autocomplete` hints (`autocomplete="tel"` on `#f-phone` here)
+*before* the conversion event fires, hash them client-side, and include them in the same
+network request. No backend involved, no code change needed on our end — it's an
+account-level Google Ads setting. Turning it on does add a real (if minor) new data flow
+that `privacy.html` now discloses: a one-way hashed version of the phone number typed
+into the enquiry form goes to Google at the moment of conversion, before `form.reset()`
+clears it. (The offline/"for leads" variant — hashed data uploaded via the Ads API — is
+still impossible here; that one genuinely needs a backend. This is the web variant.)
 
 **The performance cost is real and was accepted knowingly.** Before this, the site had
 **zero** third-party scripts (§0 self-hosted the fonts to get there). gtag.js and the
