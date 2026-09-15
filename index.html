@@ -65,6 +65,33 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/nunito-sans-var-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/rubik-var-latin.woff2">
 
+<!-- Analytics + ads conversion tracking.
+
+     In <head> and NOT deferred, deliberately. Google's own gtag snippet sits
+     in <head> and loads immediately, and Google Ads' "is the tag installed?"
+     checker expects to find it early. This file is ~7KB and injects gtag
+     asynchronously, so the parse cost is negligible — matching Google's own
+     pattern is worth more than shaving a few milliseconds here.
+
+     It still injects nothing at all while these attributes are empty, so an
+     unconfigured site pays zero bytes for it.
+
+     The IDs live HERE rather than inside analytics.js so the shop owner can
+     set them from admin/ ("Analytics & Ads" section) without touching code:
+     index.html is the only file they already download and re-upload. They are
+     not secrets — a GA4 or pixel ID is visible in the source of every site
+     that runs one. analytics.js reads them off its own tag via
+     document.currentScript. -->
+<script src="assets/js/analytics.js?v=3"
+        data-field="ga4-id ads-id meta-pixel-id ads-label-call ads-label-whatsapp ads-label-enquiry ads-label-directions"
+        data-ga4="G-RKJX3MYP3L"
+        data-google-ads=""
+        data-meta-pixel=""
+        data-label-call=""
+        data-label-whatsapp=""
+        data-label-enquiry=""
+        data-label-directions=""></script>
+
 <link rel="stylesheet" href="assets/css/style.css?v=11">
 
 <!-- Local business structured data (SEO) -->
@@ -1110,24 +1137,5 @@
 </div>
 
 <script src="assets/js/main.js?v=8" defer></script>
-<!-- Analytics + ads conversion tracking. Loaded LAST and `defer`red, and it
-     injects nothing at all while these attributes are empty — an unconfigured
-     site pays zero bytes for it.
-
-     The IDs live HERE rather than inside analytics.js so the shop owner can
-     set them from admin/ ("Analytics & Ads" section) without touching code:
-     index.html is the only file they already download and re-upload. They are
-     not secrets — a GA4 or pixel ID is visible in the source of every site
-     that runs one. analytics.js reads them off its own tag via
-     document.currentScript. -->
-<script src="assets/js/analytics.js?v=2" defer
-        data-field="ga4-id ads-id meta-pixel-id ads-label-call ads-label-whatsapp ads-label-enquiry ads-label-directions"
-        data-ga4=""
-        data-google-ads=""
-        data-meta-pixel=""
-        data-label-call=""
-        data-label-whatsapp=""
-        data-label-enquiry=""
-        data-label-directions=""></script>
 </body>
 </html>
