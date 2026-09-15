@@ -832,3 +832,44 @@ tag" → Fix it → "Install a Google tag in your website code", which is the ac
 e.g. `AW-18435201903/AbCdEfGhIj`). `analytics.js` already supported this — it calls
 `gtag('config', ...)` once per non-empty ID — the field was just still blank. Both IDs
 are meant to be filled in together, not one-or-the-other.
+
+**Conversion-action labels, filled in as they were created (Sep 2026).** Each of the
+four tracked actions needs its own Conversion Action created in Google Ads (Goals →
+Conversions → category **Contact** for Call/WhatsApp/Directions, **Submit lead form**
+for the enquiry form), each with **"Manually with code"** (never "Automatically without
+code" or an event-type of "Form submission"/"Click" under "Create your own" —
+those attach Google's own on-page listener, which fires independently of our
+validation/timing logic in `main.js`/`analytics.js` and would double-count). Status:
+- `data-label-enquiry="m_dxCP60tPgcEO-2y9ZE"` — done
+- `data-label-call="Ct9OCOKht_gcEO-2y9ZE"` — done
+- `data-label-whatsapp="rmNnCI6_vPgcEO-2y9ZE"` — done
+- `data-label-directions` — still blank, not yet created
+
+All four share the one `AW-18435201903` account tag; only the label after the `/`
+differs per action. Verified each with a Node `vm` sandbox (shim `window`/`document`,
+load `analytics.js`, simulate the trigger, assert the exact `gtag('event','conversion',
+{send_to:...})` call) before committing — see git log for the three commits that did this
+one label at a time.
+
+**A pre-existing, employee-created "Contact (Form submission wa.me/…)" conversion
+action already existed in the account** (Conversion type ID `7766833080`, created
+14/09/2026) before this round. Its own "Google tag" activation was never completed
+(showed "No tag found for this account" / a "Set up" button, not yet clicked) — so it
+was inert, not double-counting anything. **Left alone deliberately**, not deleted, not
+activated — activating it would attach Google's own automatic per-form/page-based
+listener, which is exactly the mechanism the four manual actions above were built to
+avoid. Its `wa.me` "conversion source" is also just a leftover label from the account's
+data-source setup, not our real domain — that only matters if it's ever activated.
+
+**Google Ads' conversion-creation UI changed mid-account to a 3-step wizard** ("Get
+started" → choose data sources → "Create conversion actions" → "Summary") — the direct
+"Website → Create your own → Create manually using code" screen from the original
+Recommendations card is no longer reachable via "+ New conversion action". Through this
+wizard: uncheck "Conversions from phone calls" at the data-source step (it offers Google's
+call-forwarding-number tracking, a different and more invasive mechanism than a simple
+`tel:` link click, not what these four actions need); pick category → "+ Create
+conversion" → **"Manually with code"** → name it → **Value: "Use the same value for each
+conversion"**, set to 0 (there is no literal "Don't use a value" option in this newer UI,
+this is the equivalent) → **Count: "One"** for everything here (each is a first-touch
+lead signal, not a repeatable purchase) → Summary page → "See event snippet" → the label
+is the same regardless of whether "Page load" or "Click" is selected on that screen.
