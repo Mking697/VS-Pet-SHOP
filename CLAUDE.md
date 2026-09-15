@@ -809,3 +809,14 @@ lawyerly; have it reviewed if certainty matters.
 
 **Ads do not improve organic ranking.** They are separate systems. Worth repeating to
 the owner, who asked whether running ads would make the site rank.
+
+**A Google Ads account has its own "Google tag" (`AW-…`), separate from the GA4
+measurement ID (`G-…`), and Ads' installation checker specifically looks for its own.**
+Setting only `data-ga4` satisfied GA4 but Google Ads' campaign diagnostics kept reporting
+"missing a Google tag" — its checker wants `gtag('config', 'AW-…')` on the page, not just
+any gtag. Found the AW- ID via Campaign diagnostics → "Your website is missing a Google
+tag" → Fix it → "Install a Google tag in your website code", which is the account's own
+`AW-` container ID (this is what conversion-action labels will later be suffixed onto,
+e.g. `AW-18435201903/AbCdEfGhIj`). `analytics.js` already supported this — it calls
+`gtag('config', ...)` once per non-empty ID — the field was just still blank. Both IDs
+are meant to be filled in together, not one-or-the-other.
