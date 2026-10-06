@@ -298,7 +298,22 @@
         (msg ? '\n\nMessage: ' + msg : '');
 
       var waUrl = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(text);
-      var win   = window.open(waUrl, '_blank', 'noopener');
+
+      /* Fires once validation has passed and we are definitely about to send
+         the enquiry to WhatsApp — BEFORE either branch below, because the
+         popup-blocked fallback navigates this same tab away to wa.me via
+         window.location.href, which unloads the page immediately. Dispatching
+         after that point (as a previous version of this file did) meant the
+         event — and therefore analytics.js's enquiry_submit dataLayer push —
+         never ran whenever a popup blocker intercepted window.open (routine
+         in automated/preview browsers, e.g. GTM's Tag Assistant). Both
+         branches below are a genuine successful send (WhatsApp still gets the
+         message either way), so both must count. */
+      document.dispatchEvent(new CustomEvent('vsps:enquiry-sent', {
+        detail: { topic: topic }
+      }));
+
+      var win = window.open(waUrl, '_blank', 'noopener');
 
       // If a popup blocker swallowed the new tab, navigate this one instead
       if (!win || win.closed || typeof win.closed === 'undefined') {
@@ -312,16 +327,6 @@
         setTimeout(function () { note.textContent = ''; }, 6000);
       }
       pawBurst(form.querySelector('button[type="submit"]'));
-
-      /* Fires only on a genuinely successful send — after validation passed
-         and the WhatsApp tab actually opened. analytics.js listens for this
-         to record the conversion; it deliberately does NOT bind its own
-         submit handler, because that would fire on failed validation too and
-         inflate the conversion count. Keep this dispatch after the popup
-         check above, never before it. */
-      document.dispatchEvent(new CustomEvent('vsps:enquiry-sent', {
-        detail: { topic: topic }
-      }));
 
       form.reset();
     });
