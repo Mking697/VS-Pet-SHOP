@@ -65,32 +65,40 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/nunito-sans-var-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/rubik-var-latin.woff2">
 
-<!-- Analytics + ads conversion tracking.
+<!-- Google Tag Manager — replaces the old direct gtag.js wiring (GA4 + Google
+     Ads conversions used to be configured as data-attributes on an
+     analytics.js <script> tag right here; see git history / CLAUDE.md §11 for
+     that era). GTM is now the ONLY tag-loading mechanism on this page: GA4,
+     the four Google Ads conversion actions and (when one exists) the Meta
+     pixel are all configured as tags *inside* the GTM container
+     (tagmanager.google.com), not in this file. That is the point of GTM —
+     adding/removing/editing a tracking tag is a container change + Publish,
+     never an index.html edit again.
 
-     In <head> and NOT deferred, deliberately. Google's own gtag snippet sits
-     in <head> and loads immediately, and Google Ads' "is the tag installed?"
-     checker expects to find it early. This file is ~7KB and injects gtag
-     asynchronously, so the parse cost is negligible — matching Google's own
-     pattern is worth more than shaving a few milliseconds here.
+     In <head>, as high as possible, exactly as Google's own install snippet
+     specifies (not deferred) — this is a hard requirement from Google, not a
+     style choice here.
 
-     It still injects nothing at all while these attributes are empty, so an
-     unconfigured site pays zero bytes for it.
+     The container ID is embedded in the snippet text itself (Google's
+     standard install code), so unlike the old per-ID attributes it is NOT
+     admin-panel-editable — changing it means editing this block by hand.
+     That's acceptable: a GTM container ID is created once and essentially
+     never changes (same class of exception as the JSON-LD postal address —
+     see CLAUDE.md §9). -->
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PN23ZHG6');</script>
+<!-- End Google Tag Manager -->
 
-     The IDs live HERE rather than inside analytics.js so the shop owner can
-     set them from admin/ ("Analytics & Ads" section) without touching code:
-     index.html is the only file they already download and re-upload. They are
-     not secrets — a GA4 or pixel ID is visible in the source of every site
-     that runs one. analytics.js reads them off its own tag via
-     document.currentScript. -->
-<script src="assets/js/analytics.js?v=3"
-        data-field="ga4-id ads-id meta-pixel-id ads-label-call ads-label-whatsapp ads-label-enquiry ads-label-directions"
-        data-ga4="G-RKJX3MYP3L"
-        data-google-ads="AW-18435201903"
-        data-meta-pixel=""
-        data-label-call="Ct9OCOKht_gcEO-2y9ZE"
-        data-label-whatsapp="rmNnCI6_vPgcEO-2y9ZE"
-        data-label-enquiry="m_dxCP60tPgcEO-2y9ZE"
-        data-label-directions="4u7wCNe2t_gcEO-2y9ZE"></script>
+<!-- Click-delegation helper — detects "Call" / "WhatsApp" / "Directions" /
+     "enquiry submitted" / "view catalog" interactions and pushes a plain
+     dataLayer event for each, so GTM's own triggers can pick them up without
+     this file knowing anything about GA4/Ads/Meta. Safe to defer (no install
+     requirement like the GTM snippet above). -->
+<script src="assets/js/analytics.js?v=4" defer></script>
 
 <link rel="stylesheet" href="assets/css/style.css?v=11">
 
@@ -136,6 +144,14 @@
 </script>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) — required second half of the GTM install;
+     keeps tag firing working for the rare visitor with JS disabled (GTM's own
+     tags still won't run then, but this at least logs the pageview). Must be
+     immediately after the opening <body> tag per Google's install
+     instructions. Same non-editable-ID note as the <head> snippet above. -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PN23ZHG6"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
 <a class="skip-link" href="#main">Skip to main content</a>
 

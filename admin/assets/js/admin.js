@@ -182,25 +182,18 @@
   addField({ key: 'og-title', label: 'Social Share Title (Open Graph + Twitter — WhatsApp/Facebook/Twitter link previews)', input: 'text', kind: 'attr', attr: 'content' });
   addField({ key: 'og-desc', label: 'Social Share Description (Open Graph + Twitter)', input: 'textarea', kind: 'attr', attr: 'content' });
 
-  /* Analytics & ads IDs. These are attributes on the <script src="analytics.js">
-     tag in index.html — see the comment above that tag for why they live there
-     rather than inside analytics.js. Blank = that platform stays completely
-     switched off (no tag loaded, no cookie set). */
-  addField({ key: 'ga4-id', label: 'Google Analytics Measurement ID', input: 'text', kind: 'attr', attr: 'data-ga4',
-    hint: 'analytics.google.com → Admin (bottom-left gear) → Data streams → click your web stream → "Measurement ID" at the top right. Starts with G-. Leave blank to switch Analytics off.' });
-  addField({ key: 'ads-id', label: 'Google Ads Conversion ID', input: 'text', kind: 'attr', attr: 'data-google-ads',
-    hint: 'ads.google.com → Tools (spanner icon) → Conversions → open any conversion action → "Tag setup" → "Use Google tag". Starts with AW-. The same ID is used for all four labels below.' });
-  addField({ key: 'meta-pixel-id', label: 'Meta Pixel ID (Facebook / Instagram ads)', input: 'text', kind: 'attr', attr: 'data-meta-pixel',
-    hint: 'business.facebook.com → Events Manager → Data sources → click your pixel → the long number shown under its name. Digits only. Leave blank to switch the pixel off.' });
-
-  addField({ key: 'ads-label-call', label: 'Ads label — someone tapped Call', input: 'text', kind: 'attr', attr: 'data-label-call',
-    hint: 'In Google Ads create a conversion action for phone clicks, then on its Tag setup screen copy the part AFTER the slash in AW-123456789/AbCdEfGhIj' });
-  addField({ key: 'ads-label-whatsapp', label: 'Ads label — someone tapped WhatsApp', input: 'text', kind: 'attr', attr: 'data-label-whatsapp',
-    hint: 'Same, from a separate conversion action for WhatsApp clicks.' });
-  addField({ key: 'ads-label-enquiry', label: 'Ads label — enquiry form completed', input: 'text', kind: 'attr', attr: 'data-label-enquiry',
-    hint: 'Same, from a separate conversion action. This is the highest-intent action on the site — worth marking as your primary conversion in Google Ads.' });
-  addField({ key: 'ads-label-directions', label: 'Ads label — someone tapped Get Directions', input: 'text', kind: 'attr', attr: 'data-label-directions',
-    hint: 'Same, from a separate conversion action for directions clicks.' });
+  /* Analytics & ads tracking now runs entirely through Google Tag Manager
+     (see index.html — the standard GTM head/body snippet pair, container
+     GTM-PN23ZHG6). GA4, Google Ads conversions and the Meta pixel are all
+     configured as tags INSIDE that container at tagmanager.google.com, not
+     as data-attributes in index.html any more — so there is nothing left
+     here for this admin panel to edit. Account "V S Pet Shop", container
+     "vspetshop.com". The GTM container ID itself is embedded in the inline
+     snippet text (not a data-field attribute),
+     which is a deliberate, acceptable exception: a GTM container is
+     created once and essentially never changes, same class of exception as
+     the JSON-LD postal address (CLAUDE.md §9). Editing it means editing
+     index.html by hand. */
 
   addField({ key: 'hero-lead', label: 'Hero Lead Paragraph', input: 'textarea', kind: 'simple' });
   addField({ key: 'hero-cta-primary', label: 'Primary Button Text', input: 'text', kind: 'smart' });
@@ -811,34 +804,17 @@
         '<p><strong>What this does.</strong> Lets you see how many people visit the site, ' +
         'and — if you run Google or Facebook/Instagram ads — which adverts actually produce ' +
         'phone calls and WhatsApp messages, instead of guessing.</p>' +
-        '<p><strong>Nothing is on until you paste an ID in.</strong> While every box below is ' +
-        'empty the site loads no tracking code at all and sets no cookies. Fill one in, save, ' +
-        're-upload index.html, and that platform starts working on the next page load.</p>' +
-        '<p><strong>You do not need all of them.</strong> Just want visitor numbers? Fill in only ' +
-        'the Google Analytics ID and ignore the rest. The Ads labels only matter once you are ' +
-        'actually paying for adverts.</p>';
+        '<p><strong>This is now managed through Google Tag Manager, not this panel.</strong> ' +
+        'Google Analytics (GA4), Google Ads conversion tracking and the Meta/Facebook pixel ' +
+        'are all set up as "tags" inside your Tag Manager container at ' +
+        '<a href="https://tagmanager.google.com" target="_blank" rel="noopener">tagmanager.google.com</a> ' +
+        '(container ID is already installed in index.html). To add, change or remove any ' +
+        'tracking tag, do it there and click <strong>Publish</strong> — no file download/' +
+        're-upload needed for that part any more.</p>' +
+        '<p>This panel has nothing left to edit for analytics — these fields used to hold the ' +
+        'raw GA4/Ads/Pixel IDs directly in index.html; they moved into the Tag Manager ' +
+        'container instead.</p>';
       body.appendChild(intro);
-
-      renderSimpleFieldsInto(body, [
-        FIELD_BY_KEY['ga4-id'],
-        FIELD_BY_KEY['meta-pixel-id'],
-        FIELD_BY_KEY['ads-id']
-      ]);
-
-      const labelsNote = el('p', { style: 'font-size:.8rem;color:var(--ink-soft);margin:14px 0 8px' });
-      labelsNote.innerHTML =
-        '<strong>Google Ads conversion labels.</strong> Only needed if you filled in the Google Ads ID above. ' +
-        'In Google Ads you create a separate "conversion action" for each thing you want to count, and each one ' +
-        'gives you a short code. Leave any of these blank and that action simply is not reported to Google Ads ' +
-        '(it still shows in Analytics).';
-      body.appendChild(labelsNote);
-
-      renderSimpleFieldsInto(body, [
-        FIELD_BY_KEY['ads-label-call'],
-        FIELD_BY_KEY['ads-label-whatsapp'],
-        FIELD_BY_KEY['ads-label-enquiry'],
-        FIELD_BY_KEY['ads-label-directions']
-      ]);
 
       const caveats = el('div', { class: 'adm-warn' });
       caveats.innerHTML =
@@ -846,8 +822,8 @@
         '<div><strong>Teen baatein jaan lo:</strong><br>' +
         '1. <strong>Ads se Google ranking nahi badhti.</strong> Ads paisa dekar turant traffic laate hain; ' +
         'SEO free traffic dheere banata hai. Dono alag cheezein hain.<br>' +
-        '2. <strong>Site thodi dheemi hogi.</strong> Abhi site par koi third-party script nahi hai. ' +
-        'Analytics/pixel lagate hi 1-2 lag jaayenge. Ye tracking ki keemat hai.<br>' +
+        '2. <strong>Site thodi dheemi hogi.</strong> Tag Manager + usme laga koi bhi tag (Analytics/pixel) ' +
+        'thoda extra load karte hain. Ye tracking ki keemat hai.<br>' +
         '3. <strong>Facebook kam conversions dikhayega</strong> asli se. Is site par backend nahi hai, ' +
         'isliye sirf browser pixel chal sakta hai, aur iPhone/ad-blocker uska hissa kha jaate hain. ' +
         'Ye setup ki galti nahi, platform ki limitation hai.</div>';
